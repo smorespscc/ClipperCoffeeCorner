@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order Queue | Coffee Portal</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Global and page-specific styles -->
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/queue.css">
+</head>
+<body>
+
+  <div class="container my-4">
+    <div class="queue-card shadow-sm mx-auto">
+
+      <!-- Header -->
+      <header class="queue-header text-center py-3">
+        <h2 class="mb-0">QUEUE</h2>
+      </header>
+
+      <!-- User position summary (hidden in resting mode) -->
+      <div id="userSummary" class="text-center my-3">
+        <h5>Your Order: <span id="orderNumber" class="text-primary">#---</span></h5>
+        <p class="text-muted mb-0">You are <strong id="queuePosition">—</strong> in line — approx. <strong id="waitTime">—</strong> minutes wait</p>
+      </div>
+
+      <!-- Table layout -->
+      <div class="queue-body p-3">
+        <table class="table queue-table table-striped align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col" class="text-center">ORDER</th>
+              <th scope="col" class="text-center">DRINK</th>
+              <th scope="col" class="text-center">STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="queueTableBody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer (hidden in resting mode) -->
+      <footer id="queueFooter" class="queue-footer text-center py-3">
+        <button class="btn btn-outline-secondary me-2" onclick="location.reload()">
+          <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+        <button id="newOrderBtn" class="btn btn-new-order">
+          <i class="bi bi-plus-circle me-1"></i> New Order
+        </button>
+        <!-- Simulate ready notification -->
+        <button class="btn btn-success ms-2" onclick="showReadyModal()">
+          <i class="bi bi-check-circle me-1"></i> Simulate Ready
+        </button>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- Ready Modal -->
+  <div class="modal fade" id="readyModal" tabindex="-1" aria-labelledby="readyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center p-4">
+        <div class="modal-body">
+          <div class="mb-3">
+            <span class="text-success display-4">✔</span>
+          </div>
+          <h4 id="readyModalLabel">Your Order is Ready!</h4>
+          <p class="text-muted">Please pick it up at the counter.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  function showReadyModal() {
+    const modal = new bootstrap.Modal(document.getElementById('readyModal'));
+    modal.show();
+  }
+
+  function buildPlaceholderQueue() {
+    // Static placeholders for resting mode
+    const baseNum = 200 + Math.floor(Math.random() * 50);
+    return [
+      { num: baseNum - 3, drink: 'Cappuccino', status: 'Preparing', badge: 'bg-warning text-dark' },
+      { num: baseNum - 2, drink: 'Latte', status: 'Ready', badge: 'bg-success' },
+      { num: baseNum - 1, drink: 'Matcha Tea', status: 'Queued', badge: 'bg-secondary' },
+      { num: baseNum,     drink: 'Americano', status: 'Preparing', badge: 'bg-warning text-dark' },
+      { num: baseNum + 1, drink: 'Espresso', status: 'Queued', badge: 'bg-secondary' },
+      { num: baseNum + 2, drink: 'Mocha', status: 'Preparing', badge: 'bg-warning text-dark' },
+      { num: baseNum + 3, drink: 'Flat White', status: 'Queued', badge: 'bg-secondary' }
+    ];
+  }
+
+  function populateQueue() {
+    const isResting = localStorage.getItem('restingMode') === 'true';
+    const lastOrder = JSON.parse(localStorage.getItem('lastOrder') || 'null');
+    const selectedItems = JSON.parse(localStorage.getItem('selectedItems') || '[]');
+
+    const userSummary = document.getElementById('userSummary');
+    const footer = document.getElementById('queueFooter');
+    const orderNumberEl = document.getElementById('orderNumber');
+    const queuePositionEl = document.getElementById('queuePosition');
+    const waitTimeEl = document.getElementById('waitTime');
+    const tbody = document.getElementById('queueTableBody');
+
+    if (isResting) {
+      // Resting mode: hide user summary and footer, show placeholder queue, and listen for activity
+      userSummary.classList.add('d-none');
+      footer.classList.add('d-none');
+
+      const queue = buildPlaceholderQueue();
+      tbody.innerHTML = queue.map(q => `
+        <tr>
+          <td class="text-center">#${q.num}</td>
+          <td class="text-center">${q.drink}</td>
+          <td class="text-center"><span class="badge ${q.badge}">${q.status}</span></td>
+        </tr>
+      `).join('');
+
+      // Exit resting mode on any activity
+      function exitRestingMode() {
+        localStorage.removeItem('restingMode');
+        window.location.href = '../index.html';
+      }
+      ['mousemove','keydown','click','touchstart'].forEach(evt => {
+        document.addEventListener(evt, exitRestingMode, { once: true, passive: true });
+      });
+
+      return;
+    } else {
+      // Normal mode: show summary and footer
+      userSummary.classList.remove('d-none');
+      footer.classList.remove('d-none');
+    }
+
+    // Decide which source to use for normal mode
+    let items = [];
+    let orderNumber = null;
+    if (lastOrder && Array.isArray(lastOrder.items) && lastOrder.items.length > 0) {
+      items = lastOrder.items;
+      orderNumber = lastOrder.orderNumber || Math.floor(Math.random() * 900 + 100);
+    } else if (Array.isArray(selectedItems) && selectedItems.length > 0) {
+      items = selectedItems;
+      orderNumber = Math.floor(Math.random() * 900 + 100);
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      orderNumberEl.textContent = '#---';
+      queuePositionEl.textContent = '—';
+      waitTimeEl.textContent = '—';
+
+      // Even in normal mode with no items, show placeholders so the table isn't empty
+      const queue = buildPlaceholderQueue();
+      tbody.innerHTML = queue.map(q => `
+        <tr>
+          <td class="text-center">#${q.num}</td>
+          <td class="text-center">${q.drink}</td>
+          <td class="text-center"><span class="badge ${q.badge}">${q.status}</span></td>
+        </tr>
+      `).join('');
+      return;
+    }
+
+    // Summary at top
+    orderNumberEl.textContent = '#' + orderNumber;
+    queuePositionEl.textContent = '3rd';
+    waitTimeEl.textContent = '5';
+
+    // Build placeholder queue including the user's order (highlighted)
+    const userDrink = items.length > 1 ? 'Multiple Items' : (items[0]?.name || 'Item');
+    const queue = [
+      { num: orderNumber - 2, drink: 'Cappuccino', status: 'Preparing', badge: 'bg-warning text-dark' },
+      { num: orderNumber - 1, drink: 'Latte', status: 'Ready', badge: 'bg-success' },
+      { num: orderNumber, drink: userDrink, status: 'Queued', badge: 'bg-secondary', highlight: true },
+      { num: orderNumber + 1, drink: 'Americano', status: 'Preparing', badge: 'bg-warning text-dark' },
+      { num: orderNumber + 2, drink: 'Espresso', status: 'Queued', badge: 'bg-secondary' }
+    ];
+
+    tbody.innerHTML = queue.map(q => `
+      <tr ${q.highlight ? 'class="table-info"' : ''}>
+        <td class="text-center">#${q.num}</td>
+        <td class="text-center">${q.drink}</td>
+        <td class="text-center"><span class="badge ${q.badge}">${q.status}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', populateQueue);
+
+  // Auto-refresh the queue every 10 seconds
+  const REFRESH_MS = 10000;
+  let refreshTimer = null;
+
+  function startAutoRefresh() {
+    refreshTimer = setInterval(() => {
+      populateQueue();
+
+      // Nudge the “wait time” down to simulate progress in normal mode
+      const isResting = localStorage.getItem('restingMode') === 'true';
+      const waitTimeEl = document.getElementById('waitTime');
+      if (!isResting && waitTimeEl) {
+        const current = parseInt((waitTimeEl.textContent || '5').replace(/\D/g, ''), 10);
+        if (!isNaN(current)) {
+          const next = Math.max(1, current - 1);
+          waitTimeEl.textContent = String(next);
+        }
+      }
+    }, REFRESH_MS);
+  }
+
+  startAutoRefresh();
+
+  window.addEventListener('beforeunload', () => {
+    if (refreshTimer) clearInterval(refreshTimer);
+  });
+
+  // Clear cart when starting a new order (normal mode only UI)
+  document.getElementById('newOrderBtn').addEventListener('click', () => {
+    localStorage.removeItem('selectedItems');
+    localStorage.removeItem('specialRequests');
+    localStorage.removeItem('lastOrder');
+    window.location.href = '../index.html';
+  });
+  </script>
+
+</body>
+</html>
