@@ -8,11 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Data\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Azure.Communication.Sms" Version="1.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.10" />
     <PackageReference Include="Microsoft.ML" Version="4.0.3" />
     <PackageReference Include="Microsoft.ML.FastTree" Version="4.0.3" />

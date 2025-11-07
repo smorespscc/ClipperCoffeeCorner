@@ -18,11 +18,6 @@ using WaitTimeTesting.Options;
 
 namespace WaitTimeTesting.Services
 {
-    public static class Constants
-    {
-        public const int MaxMenuId = 10;
-    }
-
     public class WaitTimeNotificationService
     {
         private readonly ILogger<WaitTimeNotificationService> _logger;
@@ -376,7 +371,6 @@ namespace WaitTimeTesting.Services
         public float TotalItemsAhead { get; set; } // Total number of items ahead in the queue
         public float WaitMinutes { get; set; }
         // This is an array that holds counts of each item type ahead in the queue at the time the order was placed. This helps the model understand the weight of different items
-        private const int MaxMenuId = 10; // Need to change size of vector depending on menu, so we can probably change this dynamically later. Also has to change in Order model
         [VectorType(Constants.MaxMenuId)]  // ← Tells ML.NET this is a fixed-size vector
         public float[] ItemsAhead { get; set; } = new float[Constants.MaxMenuId];
     }

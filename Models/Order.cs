@@ -1,6 +1,10 @@
 ﻿using Microsoft.ML.Data;
 using System;
+using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.ComponentModel.DataAnnotations.Schema;
+using WaitTimeTesting.Options;
 
 namespace WaitTimeTesting.Models
 {
@@ -15,8 +19,7 @@ namespace WaitTimeTesting.Models
         public Double? EstimatedWaitTime { get; set; }  // estimated wait time for the order at time of placement
         public int PlaceInQueue { get; set; }  // position in the order queue at time of placement
         public NotificationPreference NotificationPref { get; set; } = NotificationPreference.None;  // customer preference for notifications set at order or saved on account
-        [Column(TypeName = "nvarchar(255)")]
-        public float[] ItemsAheadAtPlacement { get; set; } = new float[10]; // ML feature: number of each item ahead in the queue at placement time
+        public float[]? ItemsAheadAtPlacement { get; set; } = new float[Constants.MaxMenuId]; // ML feature: number of each item ahead in the queue at placement time
         public float TotalItemsAheadAtPlacement { get; set; } // ML feature: total number of items ahead in the queue at placement time
     }
 
