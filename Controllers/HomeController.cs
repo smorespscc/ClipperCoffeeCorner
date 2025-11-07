@@ -1,8 +1,8 @@
 using System.Diagnostics;
-using ClipperCoffeeCorner.Models;
 using Microsoft.AspNetCore.Mvc;
+using WaitTimeTesting.Models;
 
-namespace ClipperCoffeeCorner.Controllers
+namespace WaitTimeTesting.Controllers
 {
     public class HomeController : Controller
     {

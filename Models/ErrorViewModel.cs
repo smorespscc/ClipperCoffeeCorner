@@ -1,4 +1,4 @@
-namespace ClipperCoffeeCorner.Models
+namespace WaitTimeTesting.Models
 {
     public class ErrorViewModel
     {
