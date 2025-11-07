@@ -85,7 +85,7 @@ namespace WaitTimeTesting.Services
         public int GetCurrentQueueLength() => ActiveOrders.Count;
 
         // Estimate wait time. Also prepares features for ML prediction
-        public (TimeSpan WaitTime, OrderData Features) EstimateWaitTime(Order order)
+        public (double WaitTime, OrderData Features) EstimateWaitTime(Order order)
         {
             // Parse items
             var items = ParseItems(order.ItemIds);
@@ -95,8 +95,8 @@ namespace WaitTimeTesting.Services
             var features = PrepareFeatures(order, queueLength, itemCount);
             double estimatedMinutes = PredictWithML(features);
 
-            var waitTime = TimeSpan.FromMinutes(estimatedMinutes);
-            _logger.LogInformation($"Estimated wait for {order.Uid}: {waitTime.TotalMinutes} min");
+            double waitTime = estimatedMinutes;
+            _logger.LogInformation($"Estimated wait for {order.Uid}: {waitTime} min");
             return (waitTime, features);
         }
 
@@ -114,7 +114,7 @@ namespace WaitTimeTesting.Services
             string message = type switch
             {
                 NotificationType.Placement =>
-                    $"Order placed! Items: {order.ItemIds}\nPosition: {GetQueuePosition(order)}\nEst. wait: {(int)(order.EstimatedWaitTime?.TotalMinutes ?? 0)} min\nWe'll let you know when your order is ready :)",
+                    $"Order placed! Items: {order.ItemIds}\nPosition: {GetQueuePosition(order)}\nEst. wait: {(int)(order.EstimatedWaitTime ?? 0)} min\nWe'll let you know when your order is ready :)",
                 NotificationType.Completion =>
                     $"Your order {order.Uid} is ready to be picked up!\n Your Items: {order.ItemIds}", // sending UID for testing but customer probably doesn't need to know it
                 _ => "Update from Clipper Coffee Corner"
@@ -125,7 +125,7 @@ namespace WaitTimeTesting.Services
                 var messageResource = await MessageResource.CreateAsync(
                         body: message,
                         //to: new PhoneNumber("+18777804236"),         // Twilio virtual phone number for testing
-                        to: new PhoneNumber(order.PhoneNumber)   // actual customer number
+                        to: new PhoneNumber(order.PhoneNumber),   // actual customer number
                         from: new PhoneNumber(_fromPhoneNumber)
                     );
 
@@ -165,10 +165,10 @@ namespace WaitTimeTesting.Services
             }
 
             // evaluate prediction accuracy
-            TimeSpan actualWait = completedOrder.CompletedAt.Value - completedOrder.PlacedAt;
-            double error = Math.Abs(actualWait.TotalMinutes - completedOrder.EstimatedWaitTime.Value.TotalMinutes);
+            double actualWait = (completedOrder.CompletedAt.Value - completedOrder.PlacedAt).TotalMinutes;
+            double error = Math.Abs(actualWait - completedOrder.EstimatedWaitTime.Value);
             // Doesn't currently do anything with accuracy evaluation
-            _logger.LogInformation($"Evaluation for {completedOrder.Uid}: Actual wait {actualWait.TotalMinutes} min, Estimated {completedOrder.EstimatedWaitTime.Value.TotalMinutes} min, Error {error} min.");
+            _logger.LogInformation($"Evaluation for {completedOrder.Uid}: Actual wait {actualWait:F2} min, Estimated {completedOrder.EstimatedWaitTime:F2} min, Error {error} min.");
 
             // add order to pending retrain list
             CompletedPendingTraining.Add(completedOrder);
@@ -350,13 +350,13 @@ namespace WaitTimeTesting.Services
             _logger.LogInformation("=== CURRENT SYSTEM STATE ===");
             _logger.LogInformation($"ACTIVE QUEUE ({ActiveOrders.Count}):");
             foreach (var o in ActiveOrders)
-                _logger.LogInformation($"  [{o.PlaceInQueue}] {o.Uid} | Items: {o.ItemIds} | Est: {o.EstimatedWaitTime?.TotalMinutes:F1} min");
+                _logger.LogInformation($"  [{o.PlaceInQueue}] {o.Uid} | Items: {o.ItemIds} | Est: {o.EstimatedWaitTime ?? 0:F1} min");
 
             _logger.LogInformation($"PENDING TRAINING ({CompletedPendingTraining.Count}):");
             foreach (var o in CompletedPendingTraining)
             {
                 var actual = o.CompletedAt.GetValueOrDefault() - o.PlacedAt;
-                _logger.LogInformation($"  {o.Uid} | Actual: {actual.TotalMinutes:F1} min | Est: {o.EstimatedWaitTime?.TotalMinutes:F1} min");
+                _logger.LogInformation($"  {o.Uid} | Actual: {actual.TotalMinutes:F1} min | Est: {o.EstimatedWaitTime ?? 0:F1} min");
             }
 
             _logger.LogInformation($"TRAINED & ARCHIVED ({TrainedOrders.Count}):");

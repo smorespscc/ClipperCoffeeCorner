@@ -94,7 +94,7 @@ namespace WaitTimeTesting.Controllers
                 o.Uid,
                 Position = o.PlaceInQueue,
                 o.ItemIds,
-                EstimatedMinutes = o.EstimatedWaitTime?.TotalMinutes,
+                EstimatedMinutes = o.EstimatedWaitTime,
                 o.ItemsAheadAtPlacement,
                 o.TotalItemsAheadAtPlacement,
                 o.PhoneNumber
@@ -110,10 +110,10 @@ namespace WaitTimeTesting.Controllers
                 o.Uid,
                 o.ItemIds,
                 ActualMinutes = (o.CompletedAt.GetValueOrDefault() - o.PlacedAt).TotalMinutes,
-                EstimatedMinutes = o.EstimatedWaitTime?.TotalMinutes,
+                EstimatedMinutes = o.EstimatedWaitTime,
                 o.ItemsAheadAtPlacement,
                 o.TotalItemsAheadAtPlacement,
-                Error = Math.Abs((o.CompletedAt.GetValueOrDefault() - o.PlacedAt).TotalMinutes - o.EstimatedWaitTime!.Value.TotalMinutes)
+                Error = Math.Abs((o.CompletedAt.GetValueOrDefault() - o.PlacedAt).TotalMinutes - o.EstimatedWaitTime!.Value)
             }));
         }
 
