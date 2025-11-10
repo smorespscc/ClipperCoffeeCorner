@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using WaitTimeTesting.Models;
 using WaitTimeTesting.Services;
 
@@ -31,20 +32,18 @@ namespace WaitTimeTesting.Controllers
         {
             try
             {
-                order.PlacedAt = DateTimeOffset.Now; 
-                order.Status = OrderStatus.Pending;
-                order.PlaceInQueue = _service.GetCurrentQueueLength() + 1;
-                var (waitTime, features) = _service.EstimateWaitTime(order);
-                order.EstimatedWaitTime = waitTime;
-                order.ItemsAheadAtPlacement = features.ItemsAhead;
-                order.TotalItemsAheadAtPlacement = features.TotalItemsAhead;
-                _service.AddOrder(order);
-                await _service.SendNotificationAsync(order, NotificationType.Placement);
-                return Ok(new { Message = "Order placed", EstimatedWaitTime = order.EstimatedWaitTime });
+                await _service.AddOrderAsync(order);
+                return Ok(new
+                {
+                    Message = "Order placed successfully!",
+                    OrderId = order.Uid,
+                    EstimatedWaitMinutes = Math.Round(order.EstimatedWaitTime ?? 0, 1),
+                    PositionInQueue = order.PlaceInQueue
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { Error = ex.Message });
             }
         }
 
@@ -53,17 +52,17 @@ namespace WaitTimeTesting.Controllers
         {
             try
             {
-                var order = _service.RemoveOrder(request.Uid);
-                order.CompletedAt = request.CompletedAt ?? DateTimeOffset.Now;
-                order.Status = OrderStatus.Complete;
-                await _service.SendNotificationAsync(order, NotificationType.Completion);
-                _storage.StoreCompleted(order);
-                _service.EvaluateAndLogForRetraining(order);
-                return Ok("Order completed");
+                var order = await _service.CompleteOrderAsync(request.Uid, request.CompletedAt);
+                return Ok(new
+                {
+                    Message = "Order completed and customer notified!",
+                    OrderId = order.Uid,
+                    ActualWaitMinutes = Math.Round((order.CompletedAt!.Value - order.PlacedAt).TotalMinutes, 1)
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { Error = ex.Message });
             }
         }
 
@@ -71,8 +70,8 @@ namespace WaitTimeTesting.Controllers
         [HttpGet("retrain")]
         public IActionResult Retrain()
         {
-            _service.RetrainModel();
-            return Ok("Model retrained");
+            _service.ForceRetrain();
+            return Ok("Model retraining triggered.");
         }
 
         // =====================================================================
@@ -80,54 +79,33 @@ namespace WaitTimeTesting.Controllers
         // =====================================================================
         // =====================================================================
         // GetActiveQueue:         returns current active orders in the queue
-        // GetPendingTraining:     returns orders pending training evaluation
-        // GetTrained:             returns orders that have been trained
-        // PrintQueues:            prints all queues to console/logs for debugging
+        // GetPendingTraining:     returns orders pending training evaluation       <- (have to remake this one)
+        // GetTrained:             returns orders that have been trained            <- (have to remake this one)
+        // PrintQueues:            prints all queues to console/logs for debugging  <- (have to remake this one)
         // PopulateQueue:          populates the queue with test orders
 
         [HttpGet("queue/active")]
         public IActionResult GetActiveQueue()
         {
             var queue = _service.GetActiveQueue();
-            return Ok(queue.Select(o => new
+            return Ok(queue.OrderBy(o => o.PlacedAt).Select(o => new
             {
                 o.Uid,
-                Position = o.PlaceInQueue,
+                Position = _service.GetQueuePosition(o),
                 o.ItemIds,
-                EstimatedMinutes = o.EstimatedWaitTime,
-                o.ItemsAheadAtPlacement,
-                o.TotalItemsAheadAtPlacement,
-                o.PhoneNumber
+                EstimatedMinutes = Math.Round(o.EstimatedWaitTime ?? 0, 1),
+                ItemsAhead = o.ItemsAheadAtPlacement,
+                TotalItemsAhead = o.TotalItemsAheadAtPlacement,
+                o.PhoneNumber,
+                PlacedAgo = $"{(DateTimeOffset.Now - o.PlacedAt).TotalMinutes:F0}m ago"
             }));
-        }
-
-        [HttpGet("queue/pending-training")]
-        public IActionResult GetPendingTraining()
-        {
-            var pending = _service.GetPendingTrainingOrders();
-            return Ok(pending.Select(o => new
-            {
-                o.Uid,
-                o.ItemIds,
-                ActualMinutes = (o.CompletedAt.GetValueOrDefault() - o.PlacedAt).TotalMinutes,
-                EstimatedMinutes = o.EstimatedWaitTime,
-                o.ItemsAheadAtPlacement,
-                o.TotalItemsAheadAtPlacement,
-                Error = Math.Abs((o.CompletedAt.GetValueOrDefault() - o.PlacedAt).TotalMinutes - o.EstimatedWaitTime!.Value)
-            }));
-        }
-
-        [HttpGet("queue/trained")]
-        public IActionResult GetTrained()
-        {
-            return Ok(_service.GetTrainedOrders().Select(o => new { o.Uid, o.ItemIds }));
         }
 
         [HttpGet("debug/print")]
-        public IActionResult PrintQueues()
+        public IActionResult PrintSystemState()
         {
-            _service.PrintAllQueues();
-            return Ok("Queues printed to console/logs");
+            _service.PrintSystemState();
+            return Ok("System state printed to logs.");
         }
 
         [HttpPost("test/populate-queue")]
@@ -137,48 +115,24 @@ namespace WaitTimeTesting.Controllers
                 return BadRequest("Count must be 1–50");
 
             var random = new Random();
-            var testPhoneNumbers = new[]
-            {
-        "+15551234567", // Replace with your real test number(s)
-        "+15557654321",
-        "+15559876543"
-    };
-
-            var menuItems = Enumerable.Range(1, 10).ToList(); // IDs 1–10
+            var testPhones = new[] { "+15551234567", "+15557654321", "+15559876543" };
+            var menuItems = Enumerable.Range(1, 10).ToList();
 
             for (int i = 0; i < count; i++)
             {
                 var order = new Order
                 {
                     Uid = Guid.NewGuid(),
-                    ItemIds = string.Join(",",
-                        Enumerable.Range(0, random.Next(1, 6))
-                                  .Select(_ => menuItems[random.Next(menuItems.Count)])),
-                    PhoneNumber = testPhoneNumbers[random.Next(testPhoneNumbers.Length)],
-                    NotificationPref = random.Next(0, 2) switch
-                    {
-                        0 => NotificationPreference.None,
-                        1 => NotificationPreference.Sms,
-                        _ => throw new NotImplementedException(),
-                    }
+                    ItemIds = string.Join(",", Enumerable.Range(0, random.Next(1, 6))
+                        .Select(_ => menuItems[random.Next(menuItems.Count)])),
+                    PhoneNumber = testPhones[random.Next(testPhones.Length)],
+                    NotificationPref = random.Next(0, 2) == 0 ? NotificationPreference.None : NotificationPreference.Sms
                 };
 
-                order.PlacedAt = DateTimeOffset.Now.AddSeconds(-random.Next(0, 1200)); // Spread over last 20 min
-                order.Status = OrderStatus.Pending;
-                order.PlaceInQueue = _service.GetCurrentQueueLength() + 1;
-
-                _service.AddOrder(order);
-
-                var (waitTime, features) = _service.EstimateWaitTime(order);
-                order.EstimatedWaitTime = waitTime;
-                order.ItemsAheadAtPlacement = features.ItemsAhead;
-                order.TotalItemsAheadAtPlacement = features.TotalItemsAhead;
-
-                if (order.NotificationPref == NotificationPreference.Sms)
-                    await _service.SendNotificationAsync(order, NotificationType.Placement);
+                await _service.AddOrderAsync(order);
             }
 
-            return Ok($"Added {count} test orders.");
+            return Ok($"Added {count} test orders. Check /queue/active");
         }
     }
 

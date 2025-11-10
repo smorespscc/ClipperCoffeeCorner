@@ -1,17 +1,5 @@
-using Azure;
-using Azure.Communication;
-using Azure.Communication.Sms;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
 using Twilio;
-using Twilio.AspNet.Core;
 using WaitTimeTesting.Data;
 using WaitTimeTesting.Options;
 using WaitTimeTesting.Services;
@@ -22,21 +10,19 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<WaitTimeNotificationService>();  // service
-builder.Services.AddSingleton<IOrderStorage, MockOrderStorage>();  // Mock external storage
 builder.Services.AddLogging(config => config.AddConsole());  // For ILogger
+builder.Services.AddSingleton<IWaitTimeEstimator, WaitTimeEstimator>();
+builder.Services.AddSingleton<INotificationService, TwilioNotificationService>();
+builder.Services.AddSingleton<IOrderStorage, MockOrderStorage>();
+
+// FOR TESTING:
+builder.Services.AddSingleton<IOrderQueue, InMemoryOrderQueue>();
+
+// FOR PRODUCTION (I hope):
+// builder.Services.AddScoped<IOrderQueue, DbOrderQueue>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Azure Communication Services SMS configuration
-// connection string and phone number is in appsettings.json. Might only need connnecting string tho, still figuring out how to use ACS
-//builder.Services.Configure<AzureSmsOptions>(
-//    builder.Configuration.GetSection("AzureCommunicationServices"));
-//builder.Services.AddSingleton<SmsClient>(sp =>
-//{
-//    var options = sp.GetRequiredService<IOptions<AzureSmsOptions>>().Value;
-//    return new SmsClient(options.ConnectionString);
-//});
 
 // Twilio configuration
 builder.Services.Configure<TwilioSMSOptions>(
