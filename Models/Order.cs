@@ -21,6 +21,8 @@ namespace WaitTimeTesting.Models
         public NotificationPreference NotificationPref { get; set; } = NotificationPreference.None;  // customer preference for notifications set at order or saved on account
         public float[]? ItemsAheadAtPlacement { get; set; } = new float[Constants.MaxMenuId]; // ML feature: number of each item ahead in the queue at placement time
         public float TotalItemsAheadAtPlacement { get; set; } // ML feature: total number of items ahead in the queue at placement time
+        public float? ActualWaitMinutes { get; set; }  // actual wait time in minutes (CompletedAt - PlacedAt) (might be useful for training idk)
+        public float? PredictionError { get; set; } // error in prediction (|Actual - Estimated|) (might be useful for training idk)
     }
 
     public enum OrderStatus
