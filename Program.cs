@@ -8,6 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// Add distributed in-memory cache and session support
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    // Session cookie settings
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true; // allow session cookie even if consent policies are used
+});
+
 // Configure named HttpClient for Square and register the SquareCheckoutService
 var squareBaseUrl = builder.Configuration["Square:BaseUrl"] ?? (builder.Configuration["Square:Environment"] == "Production"
     ? "https://connect.squareup.com"
@@ -45,6 +55,9 @@ app.UseDefaultFiles(new DefaultFilesOptions
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Add session middleware before authorization / endpoint execution
+app.UseSession();
 
 app.UseAuthorization();
 
