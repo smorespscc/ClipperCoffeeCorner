@@ -135,7 +135,7 @@ namespace ClipperCoffeeCorner.Models
 
         // Quantity as integer (Square sometimes models as string; using int simplifies computations)
         [JsonPropertyName("quantity")]
-        public string Quantity { get; set; } = "1";
+        public required string Quantity { get; set; }
 
         // Item-level taxes (computed amounts in minor units)
         // currently don't expect to use item-level taxes, so commented out for now
@@ -162,10 +162,10 @@ namespace ClipperCoffeeCorner.Models
     public sealed class TaxLine
     {
         [JsonPropertyName("uid")]
-        public string Uid { get; set; } = Guid.NewGuid().ToString();
+        public string? Uid { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public required string Name { get; set; }
 
         // Rate as decimal fraction (0.07 == 7%). Keep for readability; amount is authoritative.
         [JsonPropertyName("rate")]
@@ -179,10 +179,10 @@ namespace ClipperCoffeeCorner.Models
     public sealed class DiscountLine
     {
         [JsonPropertyName("uid")]
-        public string Uid { get; set; } = Guid.NewGuid().ToString();
+        public string? Uid { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public required string Name { get; set; }
 
         // Computed discount amount in minor units (positive = reduction)
         [JsonPropertyName("amount")]
@@ -190,16 +190,16 @@ namespace ClipperCoffeeCorner.Models
 
         // Optional percentage (0.10 == 10%)
         [JsonPropertyName("percentage")]
-        public decimal? Percentage { get; set; }
+        public decimal Percentage { get; set; }
     }
         
     public sealed class ServiceCharge
     {
         [JsonPropertyName("uid")]
-        public string Uid { get; set; } = Guid.NewGuid().ToString();
+        public string? Uid { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public required string Name { get; set; }
 
         // Amount in minor units
         [JsonPropertyName("amount")]
