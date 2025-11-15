@@ -74,7 +74,7 @@ namespace ClipperCoffeeCorner.Models
         // Order status - common states used with payment link flows
         [JsonPropertyName("status")]
         public OrderStatus Status { get; set; } = OrderStatus.Open;
-        }
+    }
 
     public sealed class LineItem
     {
@@ -120,16 +120,25 @@ namespace ClipperCoffeeCorner.Models
         [JsonPropertyName("uid")]
         public string? Uid { get; set; }
 
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "ADDITIVE";
+
         [JsonPropertyName("name")]
         public required string Name { get; set; }
 
-        // Rate as decimal fraction (0.07 == 7%). Keep for readability; amount is authoritative.
-        [JsonPropertyName("rate")]
-        public decimal Rate { get; set; }
+        // Rate as decimal fraction (3.6 = 3.6%). Keep for readability; amount is authoritative.
+        [JsonPropertyName("percentage")]
+        public required string Percentage { get; set; }
+
+        [JsonPropertyName("scope")]
+        public string Scope { get; set; } = "ORDER";
 
         // Computed tax amount in minor units (cents)
+        // amount is calcuated on payment link creation
+        /*
         [JsonPropertyName("amount")]
         public long Amount { get; set; }
+        */
     }
 
     public sealed class DiscountLine
@@ -141,10 +150,13 @@ namespace ClipperCoffeeCorner.Models
         public required string Name { get; set; }
 
         // Computed discount amount in minor units (positive = reduction)
+        // amount is calcuated on payment link creation
+        /*
         [JsonPropertyName("amount")]
         public long Amount { get; set; }
+        */
 
-        // Optional percentage (0.10 == 10%)
+        // Optional percentage (3.6 = 3.6%)
         [JsonPropertyName("percentage")]
         public decimal Percentage { get; set; }
     }
@@ -158,11 +170,18 @@ namespace ClipperCoffeeCorner.Models
         public required string Name { get; set; }
 
         // Amount in minor units
+        // amount is calcuated on payment link creation
+        /*
         [JsonPropertyName("amount")]
         public long Amount { get; set; }
+        */
 
-        [JsonPropertyName("taxes")]
-        public List<TaxLine> Taxes { get; set; } = new();
+        // Optional percentage (3.6 = 3.6%)
+        [JsonPropertyName("percentage")]
+        public required string Percentage { get; set; }
+
+        [JsonPropertyName("taxable")]
+        public bool Taxable { get; set; }
     }
 
     public sealed class OrderAlteration
