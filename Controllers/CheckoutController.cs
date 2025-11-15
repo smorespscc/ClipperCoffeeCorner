@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Services;
 using System.Threading.Tasks;
+using ClipperCoffeeCorner.Models;
+using ClipperCoffeeCorner.Extensions;
+using System;
+using System.Collections.Generic;
 
 namespace Controllers
 {
@@ -25,12 +29,51 @@ namespace Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateLink()
         {
-            // For demo: create a $10.00 item (1000 cents)
-            var itemName = "Coffee Product";
-            long amountCents = 1000;
+            // For demo: create a $10.00 item (1000 cents) if no order exists in session
             var redirect = Url.Action("Success", "Checkout", null, Request.Scheme);
 
-            var linkUrl = await _squareService.CreatePaymentLinkAsync(itemName, amountCents, "USD", redirect);
+            // Attempt to read an existing order from session
+            var order = HttpContext.Session.GetObject<Order>("CurrentOrder");
+            if (order == null)
+            {
+                // minimal order skeleton — fill as appropriate for your Square integration
+                order = new Order
+                {
+                    OrderId = Guid.NewGuid(),
+                    IdempotencyKey = Guid.NewGuid().ToString("N"),
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    LineItems = new List<LineItem>
+                    {
+                        new LineItem
+                        {
+                            Name = "Coffee",
+                            BasePriceMoney = new Money
+                            {
+                                Amount = 1000,
+                                Currency = "USD"
+                            },
+                        },
+                        new LineItem
+                        {
+                            Name = "Buttered Croissant",
+                            BasePriceMoney = new Money
+                            {
+                                Amount = 600,
+                                Currency = "USD"
+                            }
+                        }
+                    },
+                    TotalMoney = 1600,
+                    Status = OrderStatus.Draft
+                };
+            }
+
+            // Persist updated order back into session so later steps can access it
+            HttpContext.Session.SetObject("CurrentOrder", order);
+
+            // Create payment link from Square using the order stored in session
+            // (Service expects Order and optional redirect URL)
+            var linkUrl = await _squareService.CreatePaymentLinkAsync(order, redirect);
 
             // Redirect user to Square hosted checkout
             return Redirect(linkUrl);
@@ -39,6 +82,8 @@ namespace Controllers
         public IActionResult Success()
         {
             // Square will redirect here after checkout (if configured)
+            // Optionally clear session order on success:
+            HttpContext.Session.Remove("CurrentOrder");
             return View();
         }
     }

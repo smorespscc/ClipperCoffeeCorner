@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using ClipperCoffeeCorner.Models;
 
 namespace Services
 {
@@ -23,27 +24,17 @@ namespace Services
             _apiVersion = config["Square:ApiVersion"] ?? "2023-08-16";
         }
 
-        public async Task<string> CreatePaymentLinkAsync(string itemName, long amountCents, string currency = "USD", string? redirectUrl = null)
+        public async Task<string> CreatePaymentLinkAsync(Order order, string? redirectUrl = null)
         {
-            var idempotencyKey = Guid.NewGuid().ToString();
-
+            var idempotencyKey = order.IdempotencyKey;
+            var LineItems = order.LineItems;
             var payload = new
             {
                 idempotency_key = idempotencyKey,
                 order = new
                 {
                     location_id = _locationId,
-                    line_items = new[]
-                    {
-                        new {
-                            name = itemName,
-                            quantity = "1",
-                            base_price_money = new {
-                                amount = amountCents,
-                                currency = currency
-                            }
-                        }
-                    }
+                    line_items = LineItems
                 },
                 checkout_options = new
                 {
