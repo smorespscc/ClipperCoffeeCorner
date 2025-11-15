@@ -1,0 +1,161 @@
+/* ===============================
+   Closed page styles (closed.css)
+   Inherits variables & base styles from global.css
+   =============================== */
+
+.closed-card {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.closed-icon-wrapper {
+    margin-bottom: 2rem;
+}
+
+.closed-icon {
+    font-size: 6rem;
+    color: var(--coffee-medium);
+    animation: gentlePulse 3s ease-in-out infinite;
+}
+
+@keyframes gentlePulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+.closed-title {
+    color: var(--coffee-dark);
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.closed-message {
+    color: #666;
+    font-size: 1.1rem;
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+}
+
+.hours-info {
+    background: var(--coffee-cream);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.hours-title {
+    color: var(--coffee-dark);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.hours-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.hours-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: white;
+    border-radius: 6px;
+}
+
+.hours-label {
+    font-weight: 600;
+    color: var(--coffee-dark);
+}
+
+.hours-time {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.menu-preview-buttons {
+    margin-bottom: 1.5rem;
+}
+
+.preview-text {
+    color: #666;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.btn-preview {
+    background: var(--coffee-medium);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-preview:hover {
+    background: var(--coffee-dark);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-home {
+    background: #e9ecef;
+    color: var(--coffee-dark);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.btn-home:hover {
+    background: #dee2e6;
+    color: var(--coffee-dark);
+    transform: translateY(-2px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .closed-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .closed-icon {
+        font-size: 4.5rem;
+    }
+
+    .closed-title {
+        font-size: 1.5rem;
+    }
+
+    .closed-message {
+        font-size: 1rem;
+    }
+
+    .menu-preview-buttons .d-flex {
+        flex-direction: column;
+    }
+
+    .btn-preview {
+        width: 100%;
+    }
+}

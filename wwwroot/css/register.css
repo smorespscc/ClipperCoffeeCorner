@@ -1,14 +1,70 @@
-/* REGISTER PAGE CUSTOMIZATION
-   - Slightly warmer tone for positive first-time experience
-*/
+/* register.css amendments incorporating inline styles from register.html */
 
 .auth-card {
-  border-top: 5px solid var(--coffee-medium);
+    border-top: 5px solid var(--coffee-medium);
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+    .auth-card h2 {
+        margin-bottom: 1.5rem;
+    }
+
+.form-label {
+    font-weight: 500;
+}
+
+.form-control {
+    padding: 0.5rem 0.75rem;
 }
 
 .btn-coffee {
-  background: var(--accent);
+    background: var(--accent);
+    color: #fff;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
 }
-.btn-coffee:hover {
-  background: var(--coffee-medium);
+
+    .btn-coffee:hover {
+        background: var(--coffee-medium);
+    }
+
+.auth-link {
+    display: block;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    text-decoration: none;
+    color: var(--coffee-dark);
+}
+
+    .auth-link:hover {
+        text-decoration: underline;
+    }
+
+/* Success modal */
+#registerSuccessModal .modal-content {
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+#registerSuccessModal .text-success.display-4 {
+    font-size: 3rem;
+}
+
+#registerSuccessModal h4 {
+    margin-bottom: 0.5rem;
+}
+
+#registerSuccessModal p {
+    margin-bottom: 0;
+    color: #6c757d;
 }
