@@ -5,6 +5,9 @@ using System.Text.Json;
 using WaitTimeTesting.Models;
 using WaitTimeTesting.Options;
 
+// For testing
+// Junk
+
 namespace WaitTimeTesting.Data
 {
     public class AppDbContext : DbContext

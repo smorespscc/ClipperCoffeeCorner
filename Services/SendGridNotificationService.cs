@@ -4,6 +4,8 @@ using SendGrid.Helpers.Mail;
 using WaitTimeTesting.Models;
 using WaitTimeTesting.Options;
 
+// Email notification service using SendGrid
+
 namespace WaitTimeTesting.Services
 {
     public class SendGridNotificationService : INotificationService

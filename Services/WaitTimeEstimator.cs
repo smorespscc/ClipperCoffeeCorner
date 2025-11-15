@@ -35,6 +35,9 @@ namespace WaitTimeTesting.Services
             LoadOrTrainInitialModel();
         }
 
+        // Main estimation method. This is called when a new order is placed with the Order object and is expected to return an estimated wait time
+        // the "features" part could be removed and this could just return a double.
+        // The ML estimation stuff is split into different methods here, but it can be changed however you want as long as this method returns the estimated wait time.
         public (double WaitTime, OrderData Features) Estimate(Order order, IOrderRepository queue)
         {
             var items = ParseItems(order.ItemIds);
@@ -48,6 +51,9 @@ namespace WaitTimeTesting.Services
             return (estimatedMinutes, features);
         }
 
+
+        // Called when an order is completed. Don't know if you need this but might be useful.
+        // Isn't expected to return anything.
         public void AddCompletedForTraining(Order order)
         {
             if (!order.CompletedAt.HasValue || !order.EstimatedWaitTime.HasValue)
@@ -67,6 +73,13 @@ namespace WaitTimeTesting.Services
                 RetrainIfNeeded();
             }
         }
+
+        // ==============================================================
+        // === Below this is placeholder junk that can be replaced.   ===
+        // === The important methods are the two above which serve as ===
+        // === entry points for the ML estimation stuff.              ===
+        // ==============================================================
+
 
         public void RetrainIfNeeded()
         {

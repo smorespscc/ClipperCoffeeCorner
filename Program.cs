@@ -17,12 +17,11 @@ builder.Services.AddLogging(config => config.AddConsole());  // For ILogger
 builder.Services.AddSingleton<IWaitTimeEstimator, WaitTimeEstimator>();
 builder.Services.AddSingleton<INotificationService, TwilioNotificationService>();
 builder.Services.AddSingleton<INotificationService, SendGridNotificationService>();
-builder.Services.AddSingleton<IOrderStorage, MockOrderStorage>();
 
 // FOR TESTING:
 builder.Services.AddScoped<IOrderRepository, InMemoryOrderRepository>();
 
-// FOR PRODUCTION (I hope):
+// FOR PRODUCTION:
 // builder.Services.AddScoped<IOrderRepository, DbOrderRepository>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>

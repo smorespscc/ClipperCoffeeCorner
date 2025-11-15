@@ -41,45 +41,50 @@ namespace WaitTimeTesting.Services
         {
             if (order == null) throw new ArgumentNullException(nameof(order));
 
+            // set order fields
             order.PlacedAt = DateTimeOffset.Now;
             order.Status = OrderStatus.Pending;
             order.PlaceInQueue = _orders.GetCurrentLength() + 1;
 
-            // Estimate wait time ML stuff
+            // ask ML estimation service for wait time (can change this depending on what ML service actually needs)
+            // the "features" stuff might be unnecessary and can be removed so it just returns an estimated wait time
             var (waitTime, features) = _estimator.Estimate(order, _orders);
 
+            // fill in fields from ML estimation stuff
             order.EstimatedWaitTime = waitTime;
-            order.ItemsAheadAtPlacement = features.ItemsAhead;
-            order.TotalItemsAheadAtPlacement = features.TotalItemsAhead;
+            order.ItemsAheadAtPlacement = features.ItemsAhead;            // could be removed
+            order.TotalItemsAheadAtPlacement = features.TotalItemsAhead;  // could be removed
 
-            // add to active queue
+            // add to orders table
             _orders.Add(order);
 
             _logger.LogInformation(
                 "Order {OrderId} placed | Items: {Items} | Position: {Position} | Est. wait: {Wait:F1} min",
                 order.Uid, order.ItemIds, order.PlaceInQueue, waitTime);
 
-            // Send confirmation SMS or Email
+            // send confirmation SMS or Email
             foreach (var notifier in _notifier)
             {
                 await notifier.SendAsync(order, NotificationType.Placement);
             }
         }
 
-        public async Task<Order> CompleteOrderAsync(Guid orderId, DateTimeOffset? completedAt = null)
+
+
+        public async Task<Order> CompleteOrderAsync(Guid orderId)
         {
+            // retrieve order from sql table
             var order = _orders.FindById(orderId)
                 ?? throw new KeyNotFoundException($"Order {orderId} not found in active queue.");
 
-            // Complete order by updating fields
-            _orders.CompleteOrder(orderId);
-
-            // Finalize completion
-            order.CompletedAt = completedAt ?? DateTimeOffset.Now;
+            // set completion fields
+            order.CompletedAt = DateTimeOffset.Now;
             order.Status = OrderStatus.Complete;
+            double actualWait = (order.CompletedAt.Value - order.PlacedAt).TotalMinutes;  // probably won't use
+            double error = Math.Abs(actualWait - (order.EstimatedWaitTime ?? 0));         // probably won't use
 
-            double actualWait = (order.CompletedAt.Value - order.PlacedAt).TotalMinutes;
-            double error = Math.Abs(actualWait - (order.EstimatedWaitTime ?? 0));
+            // complete order by updating table
+            _orders.CompleteOrder(orderId);
 
             _logger.LogInformation(
                 "Order {OrderId} completed | Actual wait: {Actual:F1} min | Est: {Est:F1} min | Error: {Error:F1} min",
@@ -91,20 +96,22 @@ namespace WaitTimeTesting.Services
                 await notifier.SendAsync(order, NotificationType.Completion);
             }
 
-            // Feed into ML retraining system
+            // give to ML training service. Might not need this.
             _estimator.AddCompletedForTraining(order);
 
             return order;
         }
 
+
+
+        //=============================================
+        //==== For testing stuff. Can delete later ====
+        //=============================================
+
         public void ForceRetrain() => _estimator.RetrainIfNeeded();
         public IReadOnlyList<Order> GetActiveQueue() => _orders.GetActiveOrders();
         public int GetCurrentQueueLength() => _orders.GetCurrentLength();
         public int GetQueuePosition(Order order) => _orders.GetPosition(order);
-
-        //=============================================
-        //==== For testing: Expose internal queues ====
-        //=============================================
 
         public void PrintSystemState()
         {
@@ -132,6 +139,7 @@ namespace WaitTimeTesting.Services
     }
 
     // ML Data Classes
+    // This will be replaced by whatever the actual ML service needs
     public class OrderData
     {
         public float ItemCount { get; set; } // Item count in the order
@@ -140,7 +148,6 @@ namespace WaitTimeTesting.Services
         public float DayOfWeek { get; set; }
         public float TotalItemsAhead { get; set; } // Total number of items ahead in the queue
         public float WaitMinutes { get; set; }
-        // This is an array that holds counts of each item type ahead in the queue at the time the order was placed. This helps the model understand the weight of different items
         [VectorType(Constants.MaxMenuId)]
         public float[] ItemsAhead { get; set; } = new float[Constants.MaxMenuId];
     }

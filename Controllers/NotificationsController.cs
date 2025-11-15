@@ -11,12 +11,10 @@ namespace WaitTimeTesting.Controllers
     public class NotificationsController : ControllerBase
     {
         private readonly WaitTimeNotificationService _service;
-        private readonly IOrderStorage _storage;
 
-        public NotificationsController(WaitTimeNotificationService service, IOrderStorage storage)
+        public NotificationsController(WaitTimeNotificationService service)
         {
             _service = service;
-            _storage = storage;
         }
 
         // Example JSON input for order-placed:
@@ -38,7 +36,7 @@ namespace WaitTimeTesting.Controllers
                     Message = "Order placed successfully!",
                     OrderId = order.Uid,
                     EstimatedWaitMinutes = Math.Round(order.EstimatedWaitTime ?? 0, 1),
-                    PositionInQueue = order.PlaceInQueue
+                    PositionInQueue = order.PlaceInQueue // might not be necessary
                 });
             }
             catch (Exception ex)
@@ -52,12 +50,11 @@ namespace WaitTimeTesting.Controllers
         {
             try
             {
-                var order = await _service.CompleteOrderAsync(request.Uid, request.CompletedAt);
+                var order = await _service.CompleteOrderAsync(request.Uid);
                 return Ok(new
                 {
                     Message = "Order completed and customer notified!",
                     OrderId = order.Uid,
-                    ActualWaitMinutes = Math.Round((order.CompletedAt!.Value - order.PlacedAt).TotalMinutes, 1)
                 });
             }
             catch (Exception ex)
@@ -65,6 +62,8 @@ namespace WaitTimeTesting.Controllers
                 return BadRequest(new { Error = ex.Message });
             }
         }
+
+
 
         // For testing: Trigger retrain manually
         [HttpGet("retrain")]

@@ -2,7 +2,9 @@
 using WaitTimeTesting.Data;
 using WaitTimeTesting.Models;
 
-// Isn't currently in use, using InMemoryOrderQueue instead. If/when we have a DB up we can switch to this. Or scrap it and use whatever DB team makes idk.
+// This will probably all be replaced with calls to stuff the DB team makes
+// The methods will probably stay but the implementation will change to use
+// whatever the DB team makes.
 
 namespace WaitTimeTesting.Services
 {
@@ -64,6 +66,8 @@ namespace WaitTimeTesting.Services
             _db.Orders.Count(o => o.Status == OrderStatus.Pending && o.PlacedAt <= order.PlacedAt);
     }
 
+    // In-memory implementation of IOrderRepository for testing purposes.
+    // Junk
     public class InMemoryOrderRepository : IOrderRepository
     {
         private readonly List<Order> _orders = new();
