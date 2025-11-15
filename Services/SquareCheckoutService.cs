@@ -4,7 +4,6 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using ClipperCoffeeCorner.Models;
 
 namespace Services
@@ -34,7 +33,8 @@ namespace Services
                 order = new
                 {
                     location_id = _locationId,
-                    line_items = LineItems
+                    line_items = LineItems,
+                    taxes = order.Taxes
                 },
                 checkout_options = new
                 {
