@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ClipperCoffeeCorner.Dtos.Auth;   // <-- LoginRequest, RegisterRequest
 
 namespace ClipperCoffeeCorner.Controllers
 {
@@ -6,31 +7,24 @@ namespace ClipperCoffeeCorner.Controllers
     [Route("auth")]
     public class AuthController : ControllerBase
     {
-        public class LoginRequest
-        {
-            public string? Username { get; set; }
-            public string? PhoneNumber { get; set; }
-            public string? Email { get; set; }
-            public string? ClipperId { get; set; }
-            public string? GroupOrderId { get; set; }
-            public string Password { get; set; } = "";
-        }
-
         // POST /auth/login
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
-            // must provide at least one identifier
-            if (string.IsNullOrWhiteSpace(req.Username)
-                && string.IsNullOrWhiteSpace(req.PhoneNumber)
-                && string.IsNullOrWhiteSpace(req.Email)
-                && string.IsNullOrWhiteSpace(req.ClipperId)
-                && string.IsNullOrWhiteSpace(req.GroupOrderId))
+            // must provide at least one identifier + password
+            var hasAnyId =
+                !string.IsNullOrWhiteSpace(req.Username) ||
+                !string.IsNullOrWhiteSpace(req.PhoneNumber) ||
+                !string.IsNullOrWhiteSpace(req.Email) ||
+                !string.IsNullOrWhiteSpace(req.ClipperId) ||
+                !string.IsNullOrWhiteSpace(req.GroupOrderId);
+
+            if (!hasAnyId || string.IsNullOrWhiteSpace(req.Password))
             {
                 return BadRequest(new
                 {
                     error = "VALIDATION_ERROR",
-                    message = "Provide at least one identifier (username, phone, email, clipperId, groupOrderId)."
+                    message = "Provide at least one identifier (username, phone, email, clipperId, groupOrderId) and a password."
                 });
             }
 
@@ -44,7 +38,7 @@ namespace ClipperCoffeeCorner.Controllers
                 });
             }
 
-            // success
+            // success (mock response)
             return Ok(new
             {
                 accessToken = "jwt-or-bearer-here",
@@ -63,20 +57,21 @@ namespace ClipperCoffeeCorner.Controllers
             });
         }
 
-        public class RegisterRequest
-        {
-            public string Username { get; set; } = "";
-            public string Password { get; set; } = "";
-            public string? Email { get; set; }
-            public string? PhoneNumber { get; set; }
-            public string? ClipperId { get; set; }
-        }
-
         // POST /auth/register
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterRequest req)
         {
-            return Created("", new
+            if (string.IsNullOrWhiteSpace(req.Username) || string.IsNullOrWhiteSpace(req.Password))
+            {
+                return BadRequest(new
+                {
+                    error = "VALIDATION_ERROR",
+                    message = "username and password are required"
+                });
+            }
+
+            // mock create
+            return Created(string.Empty, new
             {
                 id = "u-9999",
                 username = req.Username,

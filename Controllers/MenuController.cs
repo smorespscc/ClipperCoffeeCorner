@@ -1,4 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ClipperCoffeeCorner.Dtos.Menu;
+using ClipperCoffeeCorner.Dtos.Orders;
+using ClipperCoffeeCorner.Dtos.Ui;
+using ClipperCoffeeCorner.Dtos.Queue;
+using ClipperCoffeeCorner.Dtos.Auth;
+
 
 namespace ClipperCoffeeCorner.Controllers
 {
