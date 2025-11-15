@@ -74,46 +74,6 @@ namespace ClipperCoffeeCorner.Models
         // Order status - common states used with payment link flows
         [JsonPropertyName("status")]
         public OrderStatus Status { get; set; } = OrderStatus.Open;
-
-        // method to calculate totals
-        public void CalculateTotals()
-        {
-            SubtotalMoney = LineItems.Sum(li => li.BasePriceMoney.Amount * int.Parse(li.Quantity));
-            TotalTaxMoney = Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount));
-            TotalDiscountMoney = Discounts.Sum(d => d.Amount);
-            TotalMoney = SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount);
-        }
-
-        /// <summary>
-        /// Recomputes all totals from line-level data and order-level taxes/discounts/service charges,
-        /// and validates them against the stored computed fields. Returns true when values match.
-        /// </summary>
-        public bool ValidateTotals(out string? error)
-            {
-            CalculateTotals();
-            if (SubtotalMoney != LineItems.Sum(li => li.BasePriceMoney.Amount * int.Parse(li.Quantity)))
-            {
-                error = "Subtotal money does not match computed line item totals.";
-                return false;
-            }
-            if (TotalTaxMoney != Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount)))
-            {
-                error = "Total tax money does not match computed tax totals.";
-                return false;
-            }
-            if (TotalDiscountMoney != Discounts.Sum(d => d.Amount))
-            {
-                error = "Total discount money does not match computed discount totals.";
-                return false;
-            }
-            if (TotalMoney != SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount))
-            {
-                error = "Total money does not match computed total.";
-                return false;
-            }
-            error = null;
-            return true;
-        }
     }
 
     public sealed class LineItem
@@ -160,16 +120,25 @@ namespace ClipperCoffeeCorner.Models
         [JsonPropertyName("uid")]
         public string? Uid { get; set; }
 
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "ADDITIVE";
+
         [JsonPropertyName("name")]
         public required string Name { get; set; }
 
-        // Rate as decimal fraction (0.07 == 7%). Keep for readability; amount is authoritative.
-        [JsonPropertyName("rate")]
-        public decimal Rate { get; set; }
+        // Rate as decimal fraction (3.6 = 3.6%). Keep for readability; amount is authoritative.
+        [JsonPropertyName("percentage")]
+        public required string Percentage { get; set; }
+
+        [JsonPropertyName("scope")]
+        public string Scope { get; set; } = "ORDER";
 
         // Computed tax amount in minor units (cents)
+        // amount is calcuated on payment link creation
+        /*
         [JsonPropertyName("amount")]
         public long Amount { get; set; }
+        */
     }
 
     public sealed class DiscountLine
@@ -181,10 +150,13 @@ namespace ClipperCoffeeCorner.Models
         public required string Name { get; set; }
 
         // Computed discount amount in minor units (positive = reduction)
+        // amount is calcuated on payment link creation
+        /*
         [JsonPropertyName("amount")]
         public long Amount { get; set; }
+        */
 
-        // Optional percentage (0.10 == 10%)
+        // Optional percentage (3.6 = 3.6%)
         [JsonPropertyName("percentage")]
         public decimal Percentage { get; set; }
     }
@@ -198,11 +170,18 @@ namespace ClipperCoffeeCorner.Models
         public required string Name { get; set; }
 
         // Amount in minor units
+        // amount is calcuated on payment link creation
+        /*
         [JsonPropertyName("amount")]
         public long Amount { get; set; }
+        */
 
-        [JsonPropertyName("taxes")]
-        public List<TaxLine> Taxes { get; set; } = new();
+        // Optional percentage (3.6 = 3.6%)
+        [JsonPropertyName("percentage")]
+        public required string Percentage { get; set; }
+
+        [JsonPropertyName("taxable")]
+        public bool Taxable { get; set; }
     }
 
     public sealed class OrderAlteration
