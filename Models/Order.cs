@@ -257,7 +257,6 @@ namespace ClipperCoffeeCorner.Models
         Placed,
         Completed,
         Cancelled,
-        Refunded,
         Draft
     }
 }
