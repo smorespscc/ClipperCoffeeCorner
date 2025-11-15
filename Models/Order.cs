@@ -74,47 +74,7 @@ namespace ClipperCoffeeCorner.Models
         // Order status - common states used with payment link flows
         [JsonPropertyName("status")]
         public OrderStatus Status { get; set; } = OrderStatus.Open;
-
-        // method to calculate totals
-        public void CalculateTotals()
-        {
-            SubtotalMoney = LineItems.Sum(li => li.BasePriceMoney.Amount * int.Parse(li.Quantity));
-            TotalTaxMoney = Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount));
-            TotalDiscountMoney = Discounts.Sum(d => d.Amount);
-            TotalMoney = SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount);
         }
-
-        /// <summary>
-        /// Recomputes all totals from line-level data and order-level taxes/discounts/service charges,
-        /// and validates them against the stored computed fields. Returns true when values match.
-        /// </summary>
-        public bool ValidateTotals(out string? error)
-            {
-            CalculateTotals();
-            if (SubtotalMoney != LineItems.Sum(li => li.BasePriceMoney.Amount * int.Parse(li.Quantity)))
-            {
-                error = "Subtotal money does not match computed line item totals.";
-                return false;
-            }
-            if (TotalTaxMoney != Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount)))
-            {
-                error = "Total tax money does not match computed tax totals.";
-                return false;
-            }
-            if (TotalDiscountMoney != Discounts.Sum(d => d.Amount))
-            {
-                error = "Total discount money does not match computed discount totals.";
-                return false;
-            }
-            if (TotalMoney != SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount))
-            {
-                error = "Total money does not match computed total.";
-                return false;
-            }
-            error = null;
-            return true;
-        }
-    }
 
     public sealed class LineItem
     {
