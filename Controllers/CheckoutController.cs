@@ -5,6 +5,7 @@ using ClipperCoffeeCorner.Models;
 using ClipperCoffeeCorner.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 
 namespace Controllers
 {
@@ -39,7 +40,6 @@ namespace Controllers
                 // minimal order skeleton — fill as appropriate for your Square integration
                 order = new Order
                 {
-                    OrderId = Guid.NewGuid(),
                     IdempotencyKey = Guid.NewGuid().ToString("N"),
                     CreatedAt = DateTimeOffset.UtcNow,
                     LineItems = new List<LineItem>
@@ -49,9 +49,10 @@ namespace Controllers
                             Name = "Coffee",
                             BasePriceMoney = new Money
                             {
-                                Amount = 1000,
+                                Amount = 450,
                                 Currency = "USD"
                             },
+                            Quantity = "2"
                         },
                         new LineItem
                         {
@@ -60,8 +61,18 @@ namespace Controllers
                             {
                                 Amount = 600,
                                 Currency = "USD"
-                            }
+                            },
+                            Quantity = "1"
                         }
+                    },
+                    Taxes = new List<TaxLine>
+                    {
+                        new TaxLine
+                        {
+                            Name = "Sales Tax",
+                            Percentage = "10.1",
+                            Scope = "ORDER"
+                        },
                     },
                     TotalMoney = 1600,
                     Status = OrderStatus.Draft
