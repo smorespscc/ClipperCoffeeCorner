@@ -20,14 +20,12 @@ loginForm.addEventListener('submit', function (e) {
   e.preventDefault();
 
   const username = document.getElementById('username').value.trim();
-  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
   const staffCode = staffCodeInput.value.trim();
-
-  const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
 
   let isValid = true;
 
-  // Username
+  // Username validation
   if (!username) {
     document.getElementById('username').classList.add('is-invalid');
     isValid = false;
@@ -35,12 +33,40 @@ loginForm.addEventListener('submit', function (e) {
     document.getElementById('username').classList.remove('is-invalid');
   }
 
-  // Email
-  if (!emailValid) {
-    document.getElementById('email').classList.add('is-invalid');
+  // Password validation - check against stored user data
+  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  let passwordValid = false;
+
+  if (!password) {
+    document.getElementById('password').classList.add('is-invalid');
     isValid = false;
   } else {
-    document.getElementById('email').classList.remove('is-invalid');
+    // Check if user exists and password matches
+    if (userData.username || userData.email) {
+      // Check if username/email matches and password is correct
+      const userMatches = username === userData.username || 
+                         username === userData.email || 
+                         username === userData.phone;
+      
+      if (userMatches && password === userData.password) {
+        passwordValid = true;
+        document.getElementById('password').classList.remove('is-invalid');
+      } else if (password === 'password') {
+        // Fallback for demo purposes
+        passwordValid = true;
+        document.getElementById('password').classList.remove('is-invalid');
+      } else {
+        document.getElementById('password').classList.add('is-invalid');
+        isValid = false;
+      }
+    } else if (password === 'password') {
+      // Fallback for demo purposes when no user is registered
+      passwordValid = true;
+      document.getElementById('password').classList.remove('is-invalid');
+    } else {
+      document.getElementById('password').classList.add('is-invalid');
+      isValid = false;
+    }
   }
 
   // Staff code validation if staff is checked

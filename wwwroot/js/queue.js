@@ -70,6 +70,22 @@ function populateQueue() {
 document.addEventListener('DOMContentLoaded', () => {
     populateQueue();
 
+    // Check if this is a resting mode redirect and set up wake functionality
+    const isRestingMode = localStorage.getItem('restingMode') === 'true';
+    
+    if (isRestingMode) {
+        // Set up wake functionality - redirect back to login on any interaction
+        function wakeUp() {
+            localStorage.removeItem('restingMode');
+            window.location.href = '/Home/Index';
+        }
+        
+        // Add wake event listeners
+        ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, wakeUp, { passive: true });
+        });
+    }
+
     // Auto-refresh
     const REFRESH_MS = 10000;
     setInterval(() => {

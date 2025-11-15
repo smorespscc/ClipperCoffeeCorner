@@ -48,6 +48,11 @@ namespace ClipperCoffeeCorner.Controllers
             return View();
         }
 
+        public IActionResult Contributions()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

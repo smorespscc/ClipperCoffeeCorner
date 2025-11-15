@@ -1,0 +1,245 @@
+@{
+    ViewData["Title"] = "Contributors";
+    Layout = "_CoffeeLayout";
+}
+
+@section Styles {
+    <style>
+        .contributors-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            padding: 2rem;
+        }
+        
+        .contributors-card {
+            background: white;
+            border-radius: 15px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .contributors-title {
+            color: #8B4513;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+        }
+        
+        .contributor-list {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+        }
+        
+        .contributor-item {
+            padding: 0.75rem 0;
+            font-size: 1.1rem;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .contributor-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .contributor-item:last-child {
+            border-bottom: none;
+        }
+        
+        .contributor-name {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .contributor-details {
+            display: none;
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: left;
+        }
+        
+        .contributor-details.show {
+            display: block;
+        }
+        
+        .dropdown-arrow {
+            transition: transform 0.2s ease;
+        }
+        
+        .dropdown-arrow.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .back-link {
+            color: #8B4513;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 2rem;
+            display: inline-block;
+        }
+        
+        .back-link:hover {
+            color: #D2691E;
+            text-decoration: underline;
+        }
+    </style>
+}
+
+<div class="contributors-container">
+    <div class="contributors-card">
+        <h1 class="contributors-title">Special Thanks</h1>
+        <p class="text-muted mb-4">This coffee ordering system was made possible by the following contributors:</p>
+        
+        <ul class="contributor-list">
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Alex Thompson - Lead Developer</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Architected the overall system design and database structure<br>
+                    • Implemented core authentication and user management features<br>
+                    • Led code reviews and established development best practices<br>
+                    • Mentored junior developers throughout the project
+                </div>
+            </li>
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Sarah Chen - UI/UX Designer</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Created wireframes and mockups for all user interfaces<br>
+                    • Designed the coffee-themed visual identity and color scheme<br>
+                    • Conducted user research and usability testing sessions<br>
+                    • Optimized user flows for mobile and desktop experiences
+                </div>
+            </li>
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Michael Rodriguez - Backend Engineer</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Developed RESTful APIs for order management and processing<br>
+                    • Implemented real-time queue updates and notifications<br>
+                    • Built secure payment processing integration<br>
+                    • Optimized database queries for improved performance
+                </div>
+            </li>
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Emma Johnson - Quality Assurance</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Developed comprehensive test plans and test cases<br>
+                    • Performed manual and automated testing across all features<br>
+                    • Identified and documented bugs and usability issues<br>
+                    • Ensured accessibility compliance and cross-browser compatibility
+                </div>
+            </li>
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>David Kim - Database Architect</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Designed normalized database schema for scalability<br>
+                    • Implemented data migration scripts and backup strategies<br>
+                    • Optimized database indexes for query performance<br>
+                    • Established data security and privacy protocols
+                </div>
+            </li>
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Lisa Park - Project Manager</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Coordinated project timeline and milestone deliverables<br>
+                    • Facilitated daily standups and sprint planning meetings<br>
+                    • Managed stakeholder communication and requirements gathering<br>
+                    • Ensured project stayed within budget and scope constraints
+                </div>
+            </li>
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>James Wilson - DevOps Engineer</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Set up CI/CD pipelines for automated deployment<br>
+                    • Configured cloud infrastructure and monitoring systems<br>
+                    • Implemented security scanning and vulnerability assessments<br>
+                    • Managed production deployments and system maintenance
+                </div>
+            </li>
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Rachel Green - Frontend Developer</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Implemented responsive user interfaces using modern frameworks<br>
+                    • Developed interactive components and animations<br>
+                    • Integrated frontend with backend APIs and services<br>
+                    • Optimized application performance and loading times
+                </div>
+            </li>
+        </ul>
+        
+        <p class="text-muted mt-4">
+            <small>Thank you for making our coffee corner a better place!</small>
+        </p>
+        
+        <a href="javascript:history.back()" class="back-link">
+            <i class="bi bi-arrow-left"></i> Go Back
+        </a>
+    </div>
+</div>
+
+<script>
+function toggleDetails(element) {
+    const details = element.querySelector('.contributor-details');
+    const arrow = element.querySelector('.dropdown-arrow');
+    
+    if (details.classList.contains('show')) {
+        details.classList.remove('show');
+        arrow.classList.remove('rotated');
+    } else {
+        // Close all other open details first
+        document.querySelectorAll('.contributor-details.show').forEach(detail => {
+            detail.classList.remove('show');
+        });
+        document.querySelectorAll('.dropdown-arrow.rotated').forEach(arr => {
+            arr.classList.remove('rotated');
+        });
+        
+        // Open the clicked one
+        details.classList.add('show');
+        arrow.classList.add('rotated');
+    }
+}
+</script>

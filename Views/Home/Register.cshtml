@@ -30,6 +30,64 @@
             <div class="invalid-feedback">Please enter a valid email address.</div>
         </div>
 
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Create a secure password" required>
+            <div class="invalid-feedback">Please create a password that meets all requirements.</div>
+            
+            <!-- Password strength indicator -->
+            <div class="password-strength mt-2">
+                <div class="strength-bar">
+                    <div class="strength-fill" id="strengthFill"></div>
+                </div>
+                <div class="strength-text" id="strengthText">Password strength</div>
+            </div>
+
+            <!-- Password requirements -->
+            <div class="password-requirements mt-2">
+                <div class="requirement" id="req-length">
+                    <i class="bi bi-circle"></i> At least 8 characters
+                </div>
+                <div class="requirement" id="req-uppercase">
+                    <i class="bi bi-circle"></i> One uppercase letter
+                </div>
+                <div class="requirement" id="req-lowercase">
+                    <i class="bi bi-circle"></i> One lowercase letter
+                </div>
+                <div class="requirement" id="req-number">
+                    <i class="bi bi-circle"></i> One number
+                </div>
+                <div class="requirement" id="req-special">
+                    <i class="bi bi-circle"></i> One special character (&#33;&#64;&#35;&#36;&#37;&#94;&#38;&#42;)
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password" required>
+            <div class="invalid-feedback">Passwords do not match.</div>
+        </div>
+
+        <!-- Notification consent checkboxes -->
+        <div class="mb-3 consent-section">
+            <label class="consent-header">Notification Preferences</label>
+            <div class="consent-options">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="emailNotifications">
+                    <label class="form-check-label" for="emailNotifications">
+                        Email notifications
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="textNotifications">
+                    <label class="form-check-label" for="textNotifications">
+                        Text notifications
+                    </label>
+                </div>
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-coffee">Register</button>
 
         <a href="@Url.Action("Index", "Home")" class="auth-link">Already have an account? → Login</a>
