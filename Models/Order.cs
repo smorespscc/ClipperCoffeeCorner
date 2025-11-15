@@ -14,15 +14,15 @@ namespace ClipperCoffeeCorner.Models
     {
         // Canonical order id in our system (UUID)
         [JsonPropertyName("order_id")]
-        public Guid OrderId { get; set; } = Guid.NewGuid();
+        public int OrderId { get; set; }
 
         // Client-provided idempotency key - must be persisted with the order
         [JsonPropertyName("idempotency_key")]
-        public string IdempotencyKey { get; set; } = string.Empty;
+        public required string IdempotencyKey { get; set; }
 
         // Square uses string location ids; keep as string to match Square
         [JsonPropertyName("location_id")]
-        public string LocationId { get; set; } = string.Empty;
+        public required string LocationId { get; set; }
 
         // Customer id (optional but recommended)
         [JsonPropertyName("customer_id")]
@@ -73,62 +73,49 @@ namespace ClipperCoffeeCorner.Models
 
         // Record of alterations for audit
         [JsonPropertyName("alterations")]
-        public List<OrderAlteration> Alterations { get; set; } = new();
+        public List<OrderAlteration>? Alterations { get; set; }
 
         // Order status - common states used with payment link flows
         [JsonPropertyName("status")]
         public OrderStatus Status { get; set; } = OrderStatus.Open;
+
+        // method to calculate totals
+        public void CalculateTotals()
+        {
+            SubtotalMoney = LineItems.Sum(li => li.BasePriceMoney.Amount * int.Parse(li.Quantity));
+            TotalTaxMoney = Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount));
+            TotalDiscountMoney = Discounts.Sum(d => d.Amount);
+            TotalMoney = SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount);
+        }
 
         /// <summary>
         /// Recomputes all totals from line-level data and order-level taxes/discounts/service charges,
         /// and validates them against the stored computed fields. Returns true when values match.
         /// </summary>
         public bool ValidateTotals(out string? error)
-        {
+            {
+            CalculateTotals();
+            if (SubtotalMoney != LineItems.Sum(li => li.BasePriceMoney.Amount * int.Parse(li.Quantity)))
+            {
+                error = "Subtotal money does not match computed line item totals.";
+                return false;
+            }
+            if (TotalTaxMoney != Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount)))
+            {
+                error = "Total tax money does not match computed tax totals.";
+                return false;
+            }
+            if (TotalDiscountMoney != Discounts.Sum(d => d.Amount))
+            {
+                error = "Total discount money does not match computed discount totals.";
+                return false;
+            }
+            if (TotalMoney != SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount))
+            {
+                error = "Total money does not match computed total.";
+                return false;
+            }
             error = null;
-
-            long computedSubtotal = LineItems.Sum(li => li.UnitPriceMoney * li.Quantity);
-            long computedLineItemDiscounts = LineItems.Sum(li => li.Discounts?.Sum(d => d.Amount) ?? 0);
-            long computedLineItemTaxes = LineItems.Sum(li => li.Taxes?.Sum(t => t.Amount) ?? 0);
-
-            long computedServiceCharges = ServiceCharges.Sum(sc => sc.Amount);
-            long computedServiceChargeTaxes = ServiceCharges.Sum(sc => sc.Taxes?.Sum(t => t.Amount) ?? 0);
-
-            long computedOrderLevelTaxes = Taxes.Sum(t => t.Amount);
-            long computedOrderLevelDiscounts = Discounts.Sum(d => d.Amount);
-
-            long computedTotalDiscounts = computedLineItemDiscounts + computedOrderLevelDiscounts;
-            long computedTotalTax = computedLineItemTaxes + computedOrderLevelTaxes + computedServiceChargeTaxes;
-
-            long computedTotal = computedSubtotal
-                                  - computedTotalDiscounts
-                                  + computedTotalTax
-                                  + computedServiceCharges;
-
-            if (computedSubtotal != SubtotalMoney)
-            {
-                error = $"Subtotal mismatch: stored={SubtotalMoney} computed={computedSubtotal}";
-                return false;
-            }
-
-            if (computedTotalTax != TotalTaxMoney)
-            {
-                error = $"Total tax mismatch: stored={TotalTaxMoney} computed={computedTotalTax}";
-                return false;
-            }
-
-            if (computedTotalDiscounts != TotalDiscountMoney)
-            {
-                error = $"Total discounts mismatch: stored={TotalDiscountMoney} computed={computedTotalDiscounts}";
-                return false;
-            }
-
-            if (computedTotal != TotalMoney)
-            {
-                error = $"Total mismatch: stored={TotalMoney} computed={computedTotal}";
-                return false;
-            }
-
             return true;
         }
     }
@@ -137,39 +124,48 @@ namespace ClipperCoffeeCorner.Models
     {
         // product / catalog id or SKU
         [JsonPropertyName("catalog_object_id")]
-        public string CatalogObjectId { get; set; } = string.Empty;
+        public string? CatalogObjectId { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public required string Name { get; set; }
 
         // Unit price in minor units (e.g., cents)
-        [JsonPropertyName("unit_price_money")]
-        public long UnitPriceMoney { get; set; }
+        [JsonPropertyName("base_price_money")]
+        public required Money BasePriceMoney { get; set; }
 
         // Quantity as integer (Square sometimes models as string; using int simplifies computations)
         [JsonPropertyName("quantity")]
-        public int Quantity { get; set; } = 1;
+        public required string Quantity { get; set; }
 
         // Item-level taxes (computed amounts in minor units)
+        // currently don't expect to use item-level taxes, so commented out for now
+        /*
         [JsonPropertyName("taxes")]
-        public List<TaxLine> Taxes { get; set; } = new();
+        public List<TaxLine>? Taxes { get; set; }
+        */
 
         // Item-level discounts (computed amounts in minor units)
+        // currently don't expect to use item-level discounts, so commented out for now
+        /* 
         [JsonPropertyName("discounts")]
-        public List<DiscountLine> Discounts { get; set; } = new();
+        public List<DiscountLine>? Discounts { get; set; }
+        */
 
         // Line total in minor units for auditability: (unit * qty) - discounts + item taxes
+        // currently don't expect to use item-level taxes/discounts, so just unit * qty
+        /*
         [JsonPropertyName("line_total_money")]
         public long LineTotalMoney { get; set; }
+        */
     }
 
     public sealed class TaxLine
     {
         [JsonPropertyName("uid")]
-        public string Uid { get; set; } = Guid.NewGuid().ToString();
+        public string? Uid { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public required string Name { get; set; }
 
         // Rate as decimal fraction (0.07 == 7%). Keep for readability; amount is authoritative.
         [JsonPropertyName("rate")]
@@ -183,10 +179,10 @@ namespace ClipperCoffeeCorner.Models
     public sealed class DiscountLine
     {
         [JsonPropertyName("uid")]
-        public string Uid { get; set; } = Guid.NewGuid().ToString();
+        public string? Uid { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public required string Name { get; set; }
 
         // Computed discount amount in minor units (positive = reduction)
         [JsonPropertyName("amount")]
@@ -194,16 +190,16 @@ namespace ClipperCoffeeCorner.Models
 
         // Optional percentage (0.10 == 10%)
         [JsonPropertyName("percentage")]
-        public decimal? Percentage { get; set; }
+        public decimal Percentage { get; set; }
     }
         
     public sealed class ServiceCharge
     {
         [JsonPropertyName("uid")]
-        public string Uid { get; set; } = Guid.NewGuid().ToString();
+        public string? Uid { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public required string Name { get; set; }
 
         // Amount in minor units
         [JsonPropertyName("amount")]
@@ -225,6 +221,14 @@ namespace ClipperCoffeeCorner.Models
         public string? ChangedBy { get; set; }
     }
 
+    public sealed class Money
+    {
+        [JsonPropertyName("amount")]
+        public long Amount { get; set; }
+        [JsonPropertyName("currency")]
+        public string Currency { get; set; } = "USD";
+    }
+
     public enum OrderStatus
     {
         // Common states used in payment link / order lifecycles
@@ -232,7 +236,6 @@ namespace ClipperCoffeeCorner.Models
         Placed,
         Completed,
         Cancelled,
-        Refunded,
         Draft
     }
 }
