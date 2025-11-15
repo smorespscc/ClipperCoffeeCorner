@@ -14,15 +14,15 @@ namespace ClipperCoffeeCorner.Models
     {
         // Canonical order id in our system (UUID)
         [JsonPropertyName("order_id")]
-        public Guid OrderId { get; set; } = Guid.NewGuid();
+        public int OrderId { get; set; }
 
         // Client-provided idempotency key - must be persisted with the order
         [JsonPropertyName("idempotency_key")]
-        public string IdempotencyKey { get; set; } = string.Empty;
+        public required string IdempotencyKey { get; set; }
 
         // Square uses string location ids; keep as string to match Square
         [JsonPropertyName("location_id")]
-        public string LocationId { get; set; } = string.Empty;
+        public required string LocationId { get; set; }
 
         // Customer id (optional but recommended)
         [JsonPropertyName("customer_id")]
@@ -73,7 +73,7 @@ namespace ClipperCoffeeCorner.Models
 
         // Record of alterations for audit
         [JsonPropertyName("alterations")]
-        public List<OrderAlteration> Alterations { get; set; } = new();
+        public List<OrderAlteration>? Alterations { get; set; }
 
         // Order status - common states used with payment link flows
         [JsonPropertyName("status")]
@@ -100,32 +100,43 @@ namespace ClipperCoffeeCorner.Models
             long computedTotalDiscounts = computedLineItemDiscounts + computedOrderLevelDiscounts;
             long computedTotalTax = computedLineItemTaxes + computedOrderLevelTaxes + computedServiceChargeTaxes;
 
-            long computedTotal = computedSubtotal
-                                  - computedTotalDiscounts
-                                  + computedTotalTax
-                                  + computedServiceCharges;
+        // method to calculate totals
+        public void CalculateTotals()
+        {
+            SubtotalMoney = LineItems.Sum(li => li.LineTotalMoney);
+            TotalTaxMoney = Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount));
+            TotalDiscountMoney = Discounts.Sum(d => d.Amount);
+            TotalMoney = SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount);
+        }
 
+        /// <summary>
+        /// Recomputes all totals from line-level data and order-level taxes/discounts/service charges,
+        /// and validates them against the stored computed fields. Returns true when values match.
+        /// </summary>
+        public bool ValidateTotals(out string? error)
+        {             error = null;
+            long computedSubtotal = LineItems.Sum(li => li.LineTotalMoney);
             if (computedSubtotal != SubtotalMoney)
             {
-                error = $"Subtotal mismatch: stored={SubtotalMoney} computed={computedSubtotal}";
+                error = $"Subtotal mismatch: computed {computedSubtotal}, stored {SubtotalMoney}";
                 return false;
             }
-
+            long computedTotalTax = Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount));
             if (computedTotalTax != TotalTaxMoney)
             {
-                error = $"Total tax mismatch: stored={TotalTaxMoney} computed={computedTotalTax}";
+                error = $"Total tax mismatch: computed {computedTotalTax}, stored {TotalTaxMoney}";
                 return false;
             }
-
-            if (computedTotalDiscounts != TotalDiscountMoney)
+            long computedTotalDiscount = Discounts.Sum(d => d.Amount);
+            if (computedTotalDiscount != TotalDiscountMoney)
             {
-                error = $"Total discounts mismatch: stored={TotalDiscountMoney} computed={computedTotalDiscounts}";
+                error = $"Total discount mismatch: computed {computedTotalDiscount}, stored {TotalDiscountMoney}";
                 return false;
             }
-
+            long computedTotal = SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount);
             if (computedTotal != TotalMoney)
             {
-                error = $"Total mismatch: stored={TotalMoney} computed={computedTotal}";
+                error = $"Total money mismatch: computed {computedTotal}, stored {TotalMoney}";
                 return false;
             }
 
@@ -137,26 +148,32 @@ namespace ClipperCoffeeCorner.Models
     {
         // product / catalog id or SKU
         [JsonPropertyName("catalog_object_id")]
-        public string CatalogObjectId { get; set; } = string.Empty;
+        public string? CatalogObjectId { get; set; }
 
         [JsonPropertyName("name")]
-        public string Name { get; set; } = string.Empty;
+        public required string Name { get; set; }
 
         // Unit price in minor units (e.g., cents)
-        [JsonPropertyName("unit_price_money")]
-        public long UnitPriceMoney { get; set; }
+        [JsonPropertyName("base_price_money")]
+        public required Money BasePriceMoney { get; set; }
 
         // Quantity as integer (Square sometimes models as string; using int simplifies computations)
         [JsonPropertyName("quantity")]
-        public int Quantity { get; set; } = 1;
+        public string Quantity { get; set; } = "1";
 
         // Item-level taxes (computed amounts in minor units)
+        // currently don't expect to use item-level taxes, so commented out for now
+        /*
         [JsonPropertyName("taxes")]
-        public List<TaxLine> Taxes { get; set; } = new();
+        public List<TaxLine>? Taxes { get; set; }
+        */
 
         // Item-level discounts (computed amounts in minor units)
+        // currently don't expect to use item-level discounts, so commented out for now
+        /* 
         [JsonPropertyName("discounts")]
-        public List<DiscountLine> Discounts { get; set; } = new();
+        public List<DiscountLine>? Discounts { get; set; }
+        */
 
         // Line total in minor units for auditability: (unit * qty) - discounts + item taxes
         [JsonPropertyName("line_total_money")]
@@ -223,6 +240,14 @@ namespace ClipperCoffeeCorner.Models
 
         [JsonPropertyName("changed_by")]
         public string? ChangedBy { get; set; }
+    }
+
+    public sealed class Money
+    {
+        [JsonPropertyName("amount")]
+        public long Amount { get; set; }
+        [JsonPropertyName("currency")]
+        public string Currency { get; set; } = "USD";
     }
 
     public enum OrderStatus
