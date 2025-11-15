@@ -1,22 +1,12 @@
-﻿using Azure.Communication.Sms;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Microsoft.ML;
-using Microsoft.ML.Data;
-using Microsoft.ML.Trainers.FastTree;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Twilio.AspNet.Core;
+﻿using Twilio.AspNet.Core;
 using Twilio.Clients;
 using Twilio.Types;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio;
-using WaitTimeTesting.Models;
-using WaitTimeTesting.Options;
+using ClipperCoffeeCorner.Models;
+using ClipperCoffeeCorner.Options;
 
-namespace WaitTimeTesting.Services
+namespace ClipperCoffeeCorner.Services
 {
     public class WaitTimeNotificationService
     {
@@ -37,30 +27,27 @@ namespace WaitTimeTesting.Services
             _logger = logger;
         }
 
-        public async Task AddOrderAsync(Order order)
+        public async Task<double> AddOrderAsync(Order order)
         {
             if (order == null) throw new ArgumentNullException(nameof(order));
 
             // set order fields
             order.PlacedAt = DateTimeOffset.Now;
             order.Status = OrderStatus.Pending;
-            order.PlaceInQueue = _orders.GetCurrentLength() + 1;
 
             // ask ML estimation service for wait time (can change this depending on what ML service actually needs)
             // the "features" stuff might be unnecessary and can be removed so it just returns an estimated wait time
-            var (waitTime, features) = _estimator.Estimate(order, _orders);
+            // var (waitTime, features) = _estimator.Estimate(order, _orders);
+            double estimatedWaitTime = _estimator.Estimate(order);
 
             // fill in fields from ML estimation stuff
-            order.EstimatedWaitTime = waitTime;
-            order.ItemsAheadAtPlacement = features.ItemsAhead;            // could be removed
-            order.TotalItemsAheadAtPlacement = features.TotalItemsAhead;  // could be removed
 
             // add to orders table
             _orders.Add(order);
 
             _logger.LogInformation(
                 "Order {OrderId} placed | Items: {Items} | Position: {Position} | Est. wait: {Wait:F1} min",
-                order.Uid, order.ItemIds, order.PlaceInQueue, waitTime);
+                order.OrderId, order.LineItems, order.PlaceInQueue, waitTime);
 
             // send confirmation SMS or Email
             foreach (var notifier in _notifier)
@@ -88,7 +75,7 @@ namespace WaitTimeTesting.Services
 
             _logger.LogInformation(
                 "Order {OrderId} completed | Actual wait: {Actual:F1} min | Est: {Est:F1} min | Error: {Error:F1} min",
-                order.Uid, actualWait, order.EstimatedWaitTime, error);
+                order.OrderId, actualWait, order.EstimatedWaitTime, error);
 
             // Send ready SMS or Email
             foreach (var notifier in _notifier)
@@ -122,8 +109,8 @@ namespace WaitTimeTesting.Services
             {
                 var pos = _orders.GetPosition(o);
                 _logger.LogInformation(
-                    " [{Pos}] {Uid} | {Items} | Est: {Est:F1} min | Placed: {Ago} ago",
-                    pos, o.Uid, o.ItemIds, o.EstimatedWaitTime,
+                    " [{Pos}] {OrderId} | {Items} | Est: {Est:F1} min | Placed: {Ago} ago",
+                    pos, o.OrderId, o.LineItems, o.EstimatedWaitTime,
                     FormatTimeAgo(o.PlacedAt));
             }
             _logger.LogInformation("=== END STATE ===");

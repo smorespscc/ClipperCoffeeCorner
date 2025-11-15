@@ -1,10 +1,10 @@
 ﻿using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
-using WaitTimeTesting.Models;
+using ClipperCoffeeCorner.Models;
 
 // SMS notification service using Twilio
 
-namespace WaitTimeTesting.Services
+namespace ClipperCoffeeCorner.Services
 {
     public class TwilioNotificationService : INotificationService
     {

@@ -1,6 +1,6 @@
-﻿using WaitTimeTesting.Models;
+﻿using ClipperCoffeeCorner.Models;
 
-namespace WaitTimeTesting.Services
+namespace ClipperCoffeeCorner.Services
 {
     public interface INotificationService
     {

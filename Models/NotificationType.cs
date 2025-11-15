@@ -1,4 +1,4 @@
-﻿namespace WaitTimeTesting.Models
+﻿namespace ClipperCoffeeCorner.Models
 {
     public enum NotificationType
     {

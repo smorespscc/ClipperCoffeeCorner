@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using WaitTimeTesting.Models;
-using WaitTimeTesting.Options;
+using ClipperCoffeeCorner.Models;
+using ClipperCoffeeCorner.Options;
 
 // Email notification service using SendGrid
 
-namespace WaitTimeTesting.Services
+namespace ClipperCoffeeCorner.Services
 {
     public class SendGridNotificationService : INotificationService
     {
@@ -32,11 +32,11 @@ namespace WaitTimeTesting.Services
             // construct message. Gotta add some stuff to actually find and display names of items
             var subject = type == NotificationType.Placement ? "Order Placed!" : "Order Ready!";
             var plain = type == NotificationType.Placement
-                ? $"Items: {order.ItemIds}\nPosition: {order.PlaceInQueue}\nEst. wait: {(int)(order.EstimatedWaitTime ?? 0)} min"
+                ? $"Items: {order.LineItems}\nPosition: {order.PlaceInQueue}\nEst. wait: {(int)(order.EstimatedWaitTime ?? 0)} min"
                 : $"Your order {order.Uid} is ready!";
 
             var html = type == NotificationType.Placement
-                ? $"<p>Items: <strong>{order.ItemIds}</strong></p>" +
+                ? $"<p>Items: <strong>{order.LineItems}</strong></p>" +
                   $"<p>Position: <strong>{order.PlaceInQueue}</strong></p>" +
                   $"<p>Est. wait: <strong>{(int)(order.EstimatedWaitTime ?? 0)} min</strong></p>"
                 : $"<p>Your order <strong>{order.Uid}</strong> is ready!</p>";

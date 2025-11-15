@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WaitTimeTesting.Data;
-using WaitTimeTesting.Models;
+using ClipperCoffeeCorner.Data;
+using ClipperCoffeeCorner.Models;
 
 // This will probably all be replaced with calls to stuff the DB team makes
 // The methods will probably stay but the implementation will change to use
 // whatever the DB team makes.
 
-namespace WaitTimeTesting.Services
+namespace ClipperCoffeeCorner.Services
 {
     public class DbOrderRepository : IOrderRepository
     {

@@ -1,4 +1,4 @@
-﻿namespace WaitTimeTesting.Options
+﻿namespace ClipperCoffeeCorner.Options
 {
     public class AzureSmsOptions
     {

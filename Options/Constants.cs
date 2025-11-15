@@ -1,4 +1,4 @@
-﻿namespace WaitTimeTesting.Options
+﻿namespace ClipperCoffeeCorner.Options
 {
     public static class Constants
     {

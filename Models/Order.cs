@@ -117,8 +117,8 @@ namespace ClipperCoffeeCorner.Models
 
     public sealed class TaxLine
     {
-        [JsonPropertyName("uid")]
-        public string? Uid { get; set; }
+        [JsonPropertyName("OrderId")]
+        public string? OrderId { get; set; }
 
         [JsonPropertyName("type")]
         public string Type { get; set; } = "ADDITIVE";
@@ -143,8 +143,8 @@ namespace ClipperCoffeeCorner.Models
 
     public sealed class DiscountLine
     {
-        [JsonPropertyName("uid")]
-        public string? Uid { get; set; }
+        [JsonPropertyName("OrderId")]
+        public string? OrderId { get; set; }
 
         [JsonPropertyName("name")]
         public required string Name { get; set; }
@@ -163,8 +163,8 @@ namespace ClipperCoffeeCorner.Models
         
     public sealed class ServiceCharge
     {
-        [JsonPropertyName("uid")]
-        public string? Uid { get; set; }
+        [JsonPropertyName("OrderId")]
+        public string? OrderId { get; set; }
 
         [JsonPropertyName("name")]
         public required string Name { get; set; }
