@@ -20,10 +20,6 @@ namespace ClipperCoffeeCorner.Models
         [JsonPropertyName("idempotency_key")]
         public required string IdempotencyKey { get; set; }
 
-        // Square uses string location ids; keep as string to match Square
-        [JsonPropertyName("location_id")]
-        public required string LocationId { get; set; }
-
         // Customer id (optional but recommended)
         [JsonPropertyName("customer_id")]
         public string? CustomerId { get; set; }
