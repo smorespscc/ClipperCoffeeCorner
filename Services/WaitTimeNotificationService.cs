@@ -20,23 +20,20 @@ namespace WaitTimeTesting.Services
 {
     public class WaitTimeNotificationService
     {
-        private readonly IOrderQueue _queue;
         private readonly IWaitTimeEstimator _estimator;
-        private readonly INotificationService _notifier;
-        private readonly IOrderStorage _storage;
+        private readonly IEnumerable<INotificationService> _notifier;
         private readonly ILogger<WaitTimeNotificationService> _logger;
+        private readonly IOrderRepository _orders;
 
         public WaitTimeNotificationService(
-            IOrderQueue queue,
+            IOrderRepository orders,
             IWaitTimeEstimator estimator,
-            INotificationService notifier,
-            IOrderStorage storage,
+            IEnumerable<INotificationService> notifier,
             ILogger<WaitTimeNotificationService> logger)
         {
-            _queue = queue;
+            _orders = orders;
             _estimator = estimator;
             _notifier = notifier;
-            _storage = storage;
             _logger = logger;
         }
 
@@ -46,36 +43,36 @@ namespace WaitTimeTesting.Services
 
             order.PlacedAt = DateTimeOffset.Now;
             order.Status = OrderStatus.Pending;
-            order.PlaceInQueue = _queue.GetCurrentLength() + 1;
+            order.PlaceInQueue = _orders.GetCurrentLength() + 1;
 
-            // Estimate wait time + capture ML features
-            var (waitTime, features) = _estimator.Estimate(order, _queue);
+            // Estimate wait time ML stuff
+            var (waitTime, features) = _estimator.Estimate(order, _orders);
 
             order.EstimatedWaitTime = waitTime;
             order.ItemsAheadAtPlacement = features.ItemsAhead;
             order.TotalItemsAheadAtPlacement = features.TotalItemsAhead;
 
-            // Persist to queue (DB or memory)
-            _queue.Add(order);
+            // add to active queue
+            _orders.Add(order);
 
             _logger.LogInformation(
                 "Order {OrderId} placed | Items: {Items} | Position: {Position} | Est. wait: {Wait:F1} min",
                 order.Uid, order.ItemIds, order.PlaceInQueue, waitTime);
 
-            // Send confirmation SMS
-            if (order.NotificationPref == NotificationPreference.Sms && !string.IsNullOrEmpty(order.PhoneNumber))
+            // Send confirmation SMS or Email
+            foreach (var notifier in _notifier)
             {
-                await _notifier.SendAsync(order, NotificationType.Placement);
+                await notifier.SendAsync(order, NotificationType.Placement);
             }
         }
 
         public async Task<Order> CompleteOrderAsync(Guid orderId, DateTimeOffset? completedAt = null)
         {
-            var order = _queue.FindById(orderId)
+            var order = _orders.FindById(orderId)
                 ?? throw new KeyNotFoundException($"Order {orderId} not found in active queue.");
 
-            // Remove from active queue
-            _queue.Remove(orderId);
+            // Complete order by updating fields
+            _orders.CompleteOrder(orderId);
 
             // Finalize completion
             order.CompletedAt = completedAt ?? DateTimeOffset.Now;
@@ -88,14 +85,11 @@ namespace WaitTimeTesting.Services
                 "Order {OrderId} completed | Actual wait: {Actual:F1} min | Est: {Est:F1} min | Error: {Error:F1} min",
                 order.Uid, actualWait, order.EstimatedWaitTime, error);
 
-            // Send ready SMS
-            if (order.NotificationPref == NotificationPreference.Sms && !string.IsNullOrEmpty(order.PhoneNumber))
+            // Send ready SMS or Email
+            foreach (var notifier in _notifier)
             {
-                await _notifier.SendAsync(order, NotificationType.Completion);
+                await notifier.SendAsync(order, NotificationType.Completion);
             }
-
-            // Persist completed order for analytics
-            _storage.StoreCompleted(order);
 
             // Feed into ML retraining system
             _estimator.AddCompletedForTraining(order);
@@ -104,9 +98,9 @@ namespace WaitTimeTesting.Services
         }
 
         public void ForceRetrain() => _estimator.RetrainIfNeeded();
-        public IReadOnlyList<Order> GetActiveQueue() => _queue.GetActiveOrders();
-        public int GetCurrentQueueLength() => _queue.GetCurrentLength();
-        public int GetQueuePosition(Order order) => _queue.GetPosition(order);
+        public IReadOnlyList<Order> GetActiveQueue() => _orders.GetActiveOrders();
+        public int GetCurrentQueueLength() => _orders.GetCurrentLength();
+        public int GetQueuePosition(Order order) => _orders.GetPosition(order);
 
         //=============================================
         //==== For testing: Expose internal queues ====
@@ -115,11 +109,11 @@ namespace WaitTimeTesting.Services
         public void PrintSystemState()
         {
             _logger.LogInformation("=== CAFE WAIT SYSTEM STATE ===");
-            _logger.LogInformation($"Active Orders: {_queue.GetCurrentLength()}");
+            _logger.LogInformation($"Active Orders: {_orders.GetCurrentLength()}");
 
-            foreach (var o in _queue.GetActiveOrders().OrderBy(o => o.PlacedAt))
+            foreach (var o in _orders.GetActiveOrders().OrderBy(o => o.PlacedAt))
             {
-                var pos = _queue.GetPosition(o);
+                var pos = _orders.GetPosition(o);
                 _logger.LogInformation(
                     " [{Pos}] {Uid} | {Items} | Est: {Est:F1} min | Placed: {Ago} ago",
                     pos, o.Uid, o.ItemIds, o.EstimatedWaitTime,

@@ -21,7 +21,7 @@ namespace WaitTimeTesting.Services
             _logger.LogInformation($"Order {order.Uid} added. Queue: {_orders.Count}");
         }
 
-        public Order Remove(Guid uid)
+        public Order CompleteOrder(Guid uid)
         {
             var order = _orders.FirstOrDefault(o => o.Uid == uid)
                 ?? throw new KeyNotFoundException("Order not found");

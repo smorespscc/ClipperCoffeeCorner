@@ -2,13 +2,16 @@
 
 namespace WaitTimeTesting.Services
 {
-    public interface IOrderQueue
+    public interface IOrderRepository
     {
         void Add(Order order);
         Order CompleteOrder(Guid uid);
-        int GetCurrentLength();
-        IReadOnlyList<Order> GetActiveOrders();
         Order? FindById(Guid uid);
+
+        IReadOnlyList<Order> GetActiveOrders();
+        IReadOnlyList<Order> GetCompletedOrders();
+
+        int GetCurrentLength();
         int GetPosition(Order order);
     }
 }

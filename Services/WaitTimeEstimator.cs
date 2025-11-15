@@ -13,7 +13,7 @@ namespace WaitTimeTesting.Services
 {
     public interface IWaitTimeEstimator
     {
-        (double WaitTime, OrderData Features) Estimate(Order order, IOrderQueue queue);
+        (double WaitTime, OrderData Features) Estimate(Order order, IOrderRepository queue);
         void AddCompletedForTraining(Order order);
         void RetrainIfNeeded();
     }
@@ -35,7 +35,7 @@ namespace WaitTimeTesting.Services
             LoadOrTrainInitialModel();
         }
 
-        public (double WaitTime, OrderData Features) Estimate(Order order, IOrderQueue queue)
+        public (double WaitTime, OrderData Features) Estimate(Order order, IOrderRepository queue)
         {
             var items = ParseItems(order.ItemIds);
             int itemCount = items.Count;
@@ -154,7 +154,7 @@ namespace WaitTimeTesting.Services
             _logger.LogInformation("Initial ML model trained and saved.");
         }
 
-        private OrderData PrepareFeatures(Order order, int queueLength, int itemCount, IOrderQueue queue)
+        private OrderData PrepareFeatures(Order order, int queueLength, int itemCount, IOrderRepository queue)
         {
             var ordersAhead = queue.GetActiveOrders()
                 .Where(o => o.PlacedAt < order.PlacedAt || (o.PlacedAt == order.PlacedAt && o.Uid != order.Uid))

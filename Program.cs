@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Sqlite;
+using Microsoft.Extensions.Options; 
+using SendGrid;
 using Twilio;
 using WaitTimeTesting.Data;
 using WaitTimeTesting.Options;
@@ -9,31 +12,43 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddSingleton<WaitTimeNotificationService>();  // service
+builder.Services.AddScoped<WaitTimeNotificationService>();  // service
 builder.Services.AddLogging(config => config.AddConsole());  // For ILogger
 builder.Services.AddSingleton<IWaitTimeEstimator, WaitTimeEstimator>();
 builder.Services.AddSingleton<INotificationService, TwilioNotificationService>();
+builder.Services.AddSingleton<INotificationService, SendGridNotificationService>();
 builder.Services.AddSingleton<IOrderStorage, MockOrderStorage>();
 
 // FOR TESTING:
-builder.Services.AddSingleton<IOrderQueue, InMemoryOrderQueue>();
+builder.Services.AddScoped<IOrderRepository, InMemoryOrderRepository>();
 
 // FOR PRODUCTION (I hope):
-// builder.Services.AddScoped<IOrderQueue, DbOrderQueue>();
+// builder.Services.AddScoped<IOrderRepository, DbOrderRepository>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite("Data Source=waittime.db"));
+//builder.Services.AddDbContext<AppDbContext>(options =>
+//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Twilio configuration
+// Twilio configuration (SMS notifications)
 builder.Services.Configure<TwilioSMSOptions>(
     builder.Configuration.GetSection("Twilio"));
 
-// Initialize Twilio client globally
 var twilioOptions = builder.Configuration.GetSection("Twilio").Get<TwilioSMSOptions>();
 if (!string.IsNullOrEmpty(twilioOptions?.AccountSid) && !string.IsNullOrEmpty(twilioOptions?.AuthToken))
 {
     TwilioClient.Init(twilioOptions.AccountSid, twilioOptions.AuthToken);
 }
+
+// SendGrid configuration (Email notifications)
+builder.Services.Configure<SendGridOptions>(
+    builder.Configuration.GetSection("SendGrid"));
+
+builder.Services.AddSingleton<SendGridClient>(sp =>
+{
+    var sendGridOptions = sp.GetRequiredService<IOptions<SendGridOptions>>().Value;
+    return new SendGridClient(sendGridOptions.ApiKey);
+});
 
 // Swagger for API testing
 builder.Services.AddEndpointsApiExplorer();

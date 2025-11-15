@@ -24,7 +24,7 @@ namespace WaitTimeTesting.Controllers
         //   "uid": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         //   "itemIds": "1,3,7,6",
         //   "phoneNumber": "+15551234567",
-        //   "notificationPref": 1           // 0=None, 1=Sms
+        //   "notificationPref": 1           // 0=None, 1=Sms, 2=Email
         // }
 
         [HttpPost("order-placed")]
