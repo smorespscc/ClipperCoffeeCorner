@@ -79,31 +79,10 @@ namespace ClipperCoffeeCorner.Models
         [JsonPropertyName("status")]
         public OrderStatus Status { get; set; } = OrderStatus.Open;
 
-        /// <summary>
-        /// Recomputes all totals from line-level data and order-level taxes/discounts/service charges,
-        /// and validates them against the stored computed fields. Returns true when values match.
-        /// </summary>
-        public bool ValidateTotals(out string? error)
-        {
-            error = null;
-
-            long computedSubtotal = LineItems.Sum(li => li.UnitPriceMoney * li.Quantity);
-            long computedLineItemDiscounts = LineItems.Sum(li => li.Discounts?.Sum(d => d.Amount) ?? 0);
-            long computedLineItemTaxes = LineItems.Sum(li => li.Taxes?.Sum(t => t.Amount) ?? 0);
-
-            long computedServiceCharges = ServiceCharges.Sum(sc => sc.Amount);
-            long computedServiceChargeTaxes = ServiceCharges.Sum(sc => sc.Taxes?.Sum(t => t.Amount) ?? 0);
-
-            long computedOrderLevelTaxes = Taxes.Sum(t => t.Amount);
-            long computedOrderLevelDiscounts = Discounts.Sum(d => d.Amount);
-
-            long computedTotalDiscounts = computedLineItemDiscounts + computedOrderLevelDiscounts;
-            long computedTotalTax = computedLineItemTaxes + computedOrderLevelTaxes + computedServiceChargeTaxes;
-
         // method to calculate totals
         public void CalculateTotals()
         {
-            SubtotalMoney = LineItems.Sum(li => li.LineTotalMoney);
+            SubtotalMoney = LineItems.Sum(li => li.BasePriceMoney.Amount * int.Parse(li.Quantity));
             TotalTaxMoney = Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount));
             TotalDiscountMoney = Discounts.Sum(d => d.Amount);
             TotalMoney = SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount);
@@ -114,32 +93,29 @@ namespace ClipperCoffeeCorner.Models
         /// and validates them against the stored computed fields. Returns true when values match.
         /// </summary>
         public bool ValidateTotals(out string? error)
-        {             error = null;
-            long computedSubtotal = LineItems.Sum(li => li.LineTotalMoney);
-            if (computedSubtotal != SubtotalMoney)
             {
-                error = $"Subtotal mismatch: computed {computedSubtotal}, stored {SubtotalMoney}";
+            CalculateTotals();
+            if (SubtotalMoney != LineItems.Sum(li => li.BasePriceMoney.Amount * int.Parse(li.Quantity)))
+            {
+                error = "Subtotal money does not match computed line item totals.";
                 return false;
             }
-            long computedTotalTax = Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount));
-            if (computedTotalTax != TotalTaxMoney)
+            if (TotalTaxMoney != Taxes.Sum(t => t.Amount) + ServiceCharges.Sum(sc => sc.Taxes.Sum(t => t.Amount)))
             {
-                error = $"Total tax mismatch: computed {computedTotalTax}, stored {TotalTaxMoney}";
+                error = "Total tax money does not match computed tax totals.";
                 return false;
             }
-            long computedTotalDiscount = Discounts.Sum(d => d.Amount);
-            if (computedTotalDiscount != TotalDiscountMoney)
+            if (TotalDiscountMoney != Discounts.Sum(d => d.Amount))
             {
-                error = $"Total discount mismatch: computed {computedTotalDiscount}, stored {TotalDiscountMoney}";
+                error = "Total discount money does not match computed discount totals.";
                 return false;
             }
-            long computedTotal = SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount);
-            if (computedTotal != TotalMoney)
+            if (TotalMoney != SubtotalMoney + TotalTaxMoney - TotalDiscountMoney + ServiceCharges.Sum(sc => sc.Amount))
             {
-                error = $"Total money mismatch: computed {computedTotal}, stored {TotalMoney}";
+                error = "Total money does not match computed total.";
                 return false;
             }
-
+            error = null;
             return true;
         }
     }
@@ -176,8 +152,11 @@ namespace ClipperCoffeeCorner.Models
         */
 
         // Line total in minor units for auditability: (unit * qty) - discounts + item taxes
+        // currently don't expect to use item-level taxes/discounts, so just unit * qty
+        /*
         [JsonPropertyName("line_total_money")]
         public long LineTotalMoney { get; set; }
+        */
     }
 
     public sealed class TaxLine
