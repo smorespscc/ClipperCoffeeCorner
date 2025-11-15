@@ -42,7 +42,7 @@ registerForm.addEventListener('submit', function (e) {
 
         // Redirect to login page after 2 seconds
         setTimeout(() => {
-            window.location.href = '../index.html';
+            window.location.href = '/Home/Index';
         }, 2000);
     }
 });

@@ -98,6 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('selectedItems');
 
         // Go back to the main ordering page
-        window.location.href = '../index.html';
+        window.location.href = '/Home/Index';
     });
 });

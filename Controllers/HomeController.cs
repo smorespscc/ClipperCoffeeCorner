@@ -18,6 +18,36 @@ namespace ClipperCoffeeCorner.Controllers
             return View();
         }
 
+        public IActionResult Menu()
+        {
+            return View();
+        }
+
+        public IActionResult Checkout()
+        {
+            return View();
+        }
+
+        public IActionResult Payment()
+        {
+            return View();
+        }
+
+        public IActionResult Queue()
+        {
+            return View();
+        }
+
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        public IActionResult Closed()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

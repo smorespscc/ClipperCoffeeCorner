@@ -72,7 +72,7 @@ loginForm.addEventListener('submit', function (e) {
 
     // Redirect to menu page after 2 seconds
     setTimeout(() => {
-      window.location.href = 'pages/menu.html';
+      window.location.href = '/Home/Menu';
     }, 2000);
   }
 });
@@ -86,7 +86,7 @@ function resetIdleTimer() {
   idleTimer = setTimeout(() => {
     // Flag that this is a "resting" redirect
     localStorage.setItem('restingMode', 'true');
-    window.location.href = 'pages/queue.html';
+    window.location.href = '/Home/Queue';
   }, IDLE_LIMIT);
 }
 

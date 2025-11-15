@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Order Queue";
+    Layout = "_CoffeeLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/queue.css" asp-append-version="true" />
+}
+
+<div class="container my-4">
+    <div class="queue-card shadow-sm mx-auto">
+
+        <!-- Header -->
+        <header class="queue-header text-center py-3">
+            <h2 class="mb-0">QUEUE</h2>
+        </header>
+
+        <!-- User position summary -->
+        <div id="userSummary" class="text-center my-3">
+            <h5>Your Order: <span id="orderNumber" class="text-primary">#---</span></h5>
+            <p class="text-muted mb-0">You are <strong id="queuePosition">—</strong> in line — approx. <strong id="waitTime">—</strong> minutes wait</p>
+        </div>
+
+        <!-- Table layout -->
+        <div class="queue-body p-3">
+            <table class="table queue-table table-striped align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col" class="text-center">ORDER</th>
+                        <th scope="col" class="text-center">DRINK</th>
+                        <th scope="col" class="text-center">STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="queueTableBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <footer id="queueFooter" class="queue-footer text-center py-3">
+            <button id="refreshBtn" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </button>
+            <button id="newOrderBtn" class="btn btn-new-order">
+                <i class="bi bi-plus-circle me-1"></i> New Order
+            </button>
+            <button id="simulateReadyBtn" class="btn btn-success ms-2">
+                <i class="bi bi-check-circle me-1"></i> Simulate Ready
+            </button>
+        </footer>
+
+    </div>
+</div>
+
+<!-- Ready Modal -->
+<div class="modal fade" id="readyModal" tabindex="-1" aria-labelledby="readyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+            <div class="modal-body">
+                <div class="mb-3">
+                    <span class="text-success display-4">✔</span>
+                </div>
+                <h4 id="readyModalLabel">Your Order is Ready!</h4>
+                <p class="text-muted">Please pick it up at the counter.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/queue.js" asp-append-version="true"></script>
+}

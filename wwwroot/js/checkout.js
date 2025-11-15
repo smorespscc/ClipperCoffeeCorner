@@ -58,8 +58,8 @@ function populateFromLocalStorage() {
         localStorage.removeItem('selectedItems');
         localStorage.removeItem('specialRequests');
 
-        // Redirect to menu.html and stop further execution
-        window.location.href = 'menu.html';
+        // Redirect to menu and stop further execution
+        window.location.href = '/Home/Menu';
         return;
     }
 
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', populateFromLocalStorage);
 
 // Go back to menu without clearing cart
 document.getElementById('backBtn').addEventListener('click', () => {
-    window.location.href = 'menu.html';
+    window.location.href = '/Home/Menu';
 });
 
 // Clear all button
@@ -141,5 +141,5 @@ document.getElementById('clearAllBtn').addEventListener('click', () => {
 
 // Proceed to payment button
 document.getElementById('proceedToPaymentBtn').addEventListener('click', () => {
-    window.location.href = 'payment.html';
+    window.location.href = '/Home/Payment';
 });

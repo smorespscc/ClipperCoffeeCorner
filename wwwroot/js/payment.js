@@ -130,7 +130,7 @@ paymentForm.addEventListener('submit', function (e) {
         localStorage.removeItem('specialRequests');
 
         setTimeout(() => {
-            window.location.href = 'queue.html';
+            window.location.href = '/Home/Queue';
         }, 2000);
     } else {
         const errorModal = new bootstrap.Modal(document.getElementById('paymentErrorModal'));

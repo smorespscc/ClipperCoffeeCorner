@@ -39,7 +39,7 @@
     
     // Redirect to closed page if outside service hours and not in viewing mode
     if (servicePeriod === 'closed' && !isViewingMode) {
-        window.location.href = 'closed.html';
+        window.location.href = '/Home/Closed';
         return;
     }
     
@@ -768,7 +768,7 @@ if (cancelBtn) {
             cancelOrderModal.show();
         } else {
             // No items selected, just go back to home
-            window.location.href = '../index.html';
+            window.location.href = '/Home/Index';
         }
     });
 }
@@ -788,7 +788,7 @@ if (confirmCancelBtn) {
         }
         
         // Redirect to home
-        window.location.href = '../index.html';
+        window.location.href = '/Home/Index';
     });
 }
 
@@ -838,7 +838,7 @@ if (orderBtn) {
             noItemsModal.show();
             return;
         }
-        window.location.href = 'checkout.html';
+        window.location.href = '/Home/Checkout';
     });
 }
 

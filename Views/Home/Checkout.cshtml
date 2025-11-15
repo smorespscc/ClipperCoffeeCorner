@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Checkout";
+    Layout = "_CoffeeLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/checkout.css" asp-append-version="true" />
+}
+
+<div class="container my-4">
+    <div class="checkout-card shadow-sm mx-auto">
+
+        <!-- Header -->
+        <header class="checkout-header text-center py-3">
+            <h2 class="mb-0">CHECKOUT</h2>
+        </header>
+
+        <!-- Order Summary -->
+        <div class="checkout-body p-3">
+            <h5 class="mb-3 d-flex justify-content-between align-items-center">
+                <span>Your Order</span>
+                <button id="clearAllBtn" class="btn btn-sm btn-warning">Clear All</button>
+            </h5>
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Item</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Modifiers</th>
+                        <th scope="col">Special Requests</th>
+                        <th scope="col" class="text-end">Price</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="orderSummary">
+                    <!-- Populated by JS -->
+                </tbody>
+                <tfoot id="orderFooter">
+                    <tr>
+                        <th colspan="5" class="text-end">Estimated Total</th>
+                        <th id="estimatedTotal" class="text-end">$0.00</th>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Optional: global special requests echoed if present -->
+            <div id="globalSpecialContainer" class="mt-3 d-none">
+                <div class="alert alert-secondary mb-0">
+                    <strong>Global special requests:</strong>
+                    <span id="globalSpecialText"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <footer class="checkout-footer d-flex p-3">
+            <button id="backBtn" class="btn btn-cancel flex-fill me-2">
+                <i class="bi bi-arrow-left me-1"></i> Back to Menu
+            </button>
+            <button id="proceedToPaymentBtn" class="btn btn-order flex-fill">
+                Proceed to Payment <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        </footer>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/checkout.js" asp-append-version="true"></script>
+}
