@@ -4,6 +4,7 @@ namespace ClipperCoffeeCorner.Services
 {
     public interface INotificationService
     {
-        Task SendAsync(Order order, NotificationType type);
+        Task SendPlacedAsync(Order order, User user, double estimatedWaitTime);
+        Task SendCompletionAsync(Order order, User user);
     }
 }

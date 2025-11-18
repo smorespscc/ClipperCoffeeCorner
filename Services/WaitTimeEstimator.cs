@@ -1,5 +1,4 @@
 ﻿using ClipperCoffeeCorner.Models;
-using ClipperCoffeeCorner.Options;
 
 namespace ClipperCoffeeCorner.Services
 {
@@ -19,8 +18,6 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // Main estimation method. This is called when a new order is placed with the Order object and is expected to return an estimated wait time
-        // the "features" part could be removed and this could just return a double.
-        // The ML estimation stuff is split into different methods here, but it can be changed however you want as long as this method returns the estimated wait time.
         public double Estimate(Order order)
         {
             var estimatedWaitTime = 15.0; // Placeholder fixed estimate

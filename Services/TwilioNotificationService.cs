@@ -17,23 +17,47 @@ namespace ClipperCoffeeCorner.Services
             _logger = logger;
         }
 
-        public async Task SendAsync(Order order, NotificationType type)
+        // send order placed SMS notification
+        public async Task SendPlacedAsync(Order order, User user, double estimatedWaitTime)
         {
-            if (order.NotificationPref != NotificationPreference.Sms || string.IsNullOrEmpty(order.PhoneNumber))
+            if (user.NotificationPref != NotificationPreference.Sms ||
+                string.IsNullOrWhiteSpace(user.PhoneNumber))
                 return;
 
-            var message = type == NotificationType.Placement
-                ? $"Order placed! Est. wait: {(int)(order.EstimatedWaitTime ?? 0)} min"
-                : $"Your order is ready!";
+            var message = $"Order placed! Est. wait: {estimatedWaitTime} min";
 
             try
             {
                 var result = await MessageResource.CreateAsync(
                     body: message,
                     from: new PhoneNumber(_fromNumber),
-                    to: new PhoneNumber(order.PhoneNumber)
+                    to: new PhoneNumber(user.PhoneNumber)
                 );
-                _logger.LogInformation($"SMS sent to {order.PhoneNumber}: {result.Sid}");
+                _logger.LogInformation($"SMS sent to {user.PhoneNumber}: {result.Sid}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SMS failed");
+            }
+        }
+
+        // send order completed SMS notification
+        public async Task SendCompletionAsync(Order order, User user)
+        {
+            if (user.NotificationPref != NotificationPreference.Sms ||
+                string.IsNullOrWhiteSpace(user.PhoneNumber))
+                return;
+
+            var message = $"Your order is ready!";
+
+            try
+            {
+                var result = await MessageResource.CreateAsync(
+                    body: message,
+                    from: new PhoneNumber(_fromNumber),
+                    to: new PhoneNumber(user.PhoneNumber)
+                );
+                _logger.LogInformation($"SMS sent to {user.PhoneNumber}: {result.Sid}");
             }
             catch (Exception ex)
             {

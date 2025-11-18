@@ -23,23 +23,18 @@ namespace ClipperCoffeeCorner.Services
             _logger = logger;
         }
 
-        public async Task SendAsync(Order order, NotificationType type)
+        // Send order placement notification
+        public async Task SendPlacedAsync(Order order, User user, double estimatedWaitTime)
         {
-            if (!order.NotificationPref.HasFlag(NotificationPreference.Email) ||
-                string.IsNullOrWhiteSpace(order.Email))
+            if (!user.NotificationPref.HasFlag(NotificationPreference.Email) ||
+                string.IsNullOrWhiteSpace(user.NotificationEmail))
                 return;
 
-            // construct message. Gotta add some stuff to actually find and display names of items
-            var subject = type == NotificationType.Placement ? "Order Placed!" : "Order Ready!";
-            var plain = type == NotificationType.Placement
-                ? $"Items: {order.LineItems}\nPosition: {order.PlaceInQueue}\nEst. wait: {(int)(order.EstimatedWaitTime ?? 0)} min"
-                : $"Your order {order.Uid} is ready!";
-
-            var html = type == NotificationType.Placement
-                ? $"<p>Items: <strong>{order.LineItems}</strong></p>" +
-                  $"<p>Position: <strong>{order.PlaceInQueue}</strong></p>" +
-                  $"<p>Est. wait: <strong>{(int)(order.EstimatedWaitTime ?? 0)} min</strong></p>"
-                : $"<p>Your order <strong>{order.Uid}</strong> is ready!</p>";
+            var subject = "Order Placed!";
+            var plain = $"Items: {order.LineItems}\nPosition in line: idk dawg maybe we can add this\nEst. wait: {estimatedWaitTime} min";
+            var html = $"<p>Items: <strong>{order.LineItems}</strong></p>" +
+                       $"<p>Position: <strong>idk dawg maybe we can add this</strong></p>" +
+                       $"<p>Est. wait: <strong>{estimatedWaitTime} min</strong></p>";
 
             var msg = new SendGridMessage
             {
@@ -48,19 +43,53 @@ namespace ClipperCoffeeCorner.Services
                 PlainTextContent = plain,
                 HtmlContent = html
             };
-            msg.AddTo(order.Email);
+            msg.AddTo(user.NotificationEmail);
 
             try
             {
                 var resp = await _client.SendEmailAsync(msg);
                 if (resp.IsSuccessStatusCode)
-                    _logger.LogInformation($"[EMAIL] Sent to {order.Email}");
+                    _logger.LogInformation($"[EMAIL] Sent to {user.NotificationEmail}");
                 else
                     _logger.LogError($"[EMAIL] Failed: {await resp.Body.ReadAsStringAsync()}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"[EMAIL] Exception to {order.Email}");
+                _logger.LogError(ex, $"[EMAIL] Exception to {user.NotificationEmail}");
+            }
+        }
+
+        // Send order completion notification
+        public async Task SendCompletionAsync(Order order, User user)
+        {
+            if (!user.NotificationPref.HasFlag(NotificationPreference.Email) ||
+                string.IsNullOrWhiteSpace(user.NotificationEmail))
+                return;
+
+            var subject = "Order Ready!";
+            var plain = $"Your order {order.OrderId} is ready!";
+            var html = $"<p>Your order <strong>{order.OrderId}</strong> is ready!</p>";
+
+            var msg = new SendGridMessage
+            {
+                From = new EmailAddress(_opts.FromEmail, _opts.FromName),
+                Subject = subject,
+                PlainTextContent = plain,
+                HtmlContent = html
+            };
+            msg.AddTo(user.NotificationEmail);
+
+            try
+            {
+                var resp = await _client.SendEmailAsync(msg);
+                if (resp.IsSuccessStatusCode)
+                    _logger.LogInformation($"[EMAIL] Sent to {user.NotificationEmail}");
+                else
+                    _logger.LogError($"[EMAIL] Failed: {await resp.Body.ReadAsStringAsync()}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"[EMAIL] Exception to {user.NotificationEmail}");
             }
         }
     }

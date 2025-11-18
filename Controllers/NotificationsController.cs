@@ -17,14 +17,6 @@ namespace ClipperCoffeeCorner.Controllers
             _service = service;
         }
 
-        // Example JSON input for order-placed:
-        // {
-        //   "OrderId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-        //   "LineItems": "1,3,7,6",
-        //   "phoneNumber": "+15551234567",
-        //   "notificationPref": 1           // 0=None, 1=Sms, 2=Email
-        // }
-
         [HttpPost("order-placed")]
         public async Task<IActionResult> OrderPlaced([FromBody] Order order)
         {
@@ -45,11 +37,11 @@ namespace ClipperCoffeeCorner.Controllers
         }
 
         [HttpPost("order-complete")]
-        public async Task<IActionResult> OrderComplete([FromBody] CompleteRequest request)
+        public async Task<IActionResult> OrderComplete([FromBody] Guid orderId)
         {
             try
             {
-                var order = await _service.CompleteOrderAsync(request.OrderId);
+                var order = await _service.CompleteOrderAsync(orderId);
                 return Ok(new
                 {
                     Message = "Order completed and customer notified!",
@@ -61,10 +53,5 @@ namespace ClipperCoffeeCorner.Controllers
                 return BadRequest(new { Error = ex.Message });
             }
         }
-    }
-    public class CompleteRequest
-    {
-        public Guid OrderId { get; set; }
-        public DateTimeOffset? CompletedAt { get; set; }
     }
 }

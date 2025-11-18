@@ -1,10 +1,5 @@
-﻿using Twilio.AspNet.Core;
-using Twilio.Clients;
-using Twilio.Types;
-using Twilio.Rest.Api.V2010.Account;
-using Twilio;
-using ClipperCoffeeCorner.Models;
-using ClipperCoffeeCorner.Options;
+﻿using ClipperCoffeeCorner.Models;
+
 
 namespace ClipperCoffeeCorner.Services
 {
@@ -29,15 +24,13 @@ namespace ClipperCoffeeCorner.Services
 
         public async Task<double> AddOrderAsync(Order order)
         {
-            if (order == null) throw new ArgumentNullException(nameof(order));
+            ArgumentNullException.ThrowIfNull(order);
 
             // set order fields
             order.PlacedAt = DateTimeOffset.Now;
-            order.Status = OrderStatus.Pending;
+            order.Status = OrderStatus.Placed;
 
             // ask ML estimation service for wait time (can change this depending on what ML service actually needs)
-            // the "features" stuff might be unnecessary and can be removed so it just returns an estimated wait time
-            // var (waitTime, features) = _estimator.Estimate(order, _orders);
             double estimatedWaitTime = _estimator.Estimate(order);
 
             // fill in fields from ML estimation stuff
@@ -45,42 +38,55 @@ namespace ClipperCoffeeCorner.Services
             // add to orders table
             _orders.Add(order);
 
-            _logger.LogInformation(
-                "Order {OrderId} placed | Items: {Items} | Position: {Position} | Est. wait: {Wait:F1} min",
-                order.OrderId, order.LineItems, order.PlaceInQueue, waitTime);
+            // INSERT: stuff to query users table to get email, phone number, and notification preference
+            // both SMS and Email notifiers will need that info so better to query it here than have them both do it
+            User user = new User
+            {
+                // temporary hardcoded user info for testing
+                UserId = Guid.NewGuid(),
+                Username = "Test User",
+                UserRole = "Customer",
+                NotificationPref = NotificationPreference.Email,
+                PhoneNumber = "+15551234567",
+                NotificationEmail = "mmarsh7of9@gmail.com"
+            };
 
             // send confirmation SMS or Email
             foreach (var notifier in _notifier)
             {
-                await notifier.SendAsync(order, NotificationType.Placement);
+                await notifier.SendPlacedAsync(order, user, estimatedWaitTime);
             }
+            return estimatedWaitTime;
         }
 
 
 
         public async Task<Order> CompleteOrderAsync(Guid orderId)
         {
-            // retrieve order from sql table
-            var order = _orders.FindById(orderId)
-                ?? throw new KeyNotFoundException($"Order {orderId} not found in active queue.");
-
-            // set completion fields
-            order.CompletedAt = DateTimeOffset.Now;
-            order.Status = OrderStatus.Complete;
-            double actualWait = (order.CompletedAt.Value - order.PlacedAt).TotalMinutes;  // probably won't use
-            double error = Math.Abs(actualWait - (order.EstimatedWaitTime ?? 0));         // probably won't use
+            // INSERT: retrieve order from sql table
+            // placeholder object for now
+            var order = CreateTestOrder();
 
             // complete order by updating table
             _orders.CompleteOrder(orderId);
 
-            _logger.LogInformation(
-                "Order {OrderId} completed | Actual wait: {Actual:F1} min | Est: {Est:F1} min | Error: {Error:F1} min",
-                order.OrderId, actualWait, order.EstimatedWaitTime, error);
+            // INSERT: stuff to query users table to get email, phone number, and notification preference
+            // both SMS and Email notifiers will need that info so better to query it here than have them both do it
+            User user = new User
+            {
+                // temporary hardcoded user info for testing
+                UserId = Guid.NewGuid(),
+                Username = "Test User",
+                UserRole = "Customer",
+                NotificationPref = NotificationPreference.Email,
+                PhoneNumber = "+15551234567",
+                NotificationEmail = "mmarsh7of9@gmail.com"
+            };
 
             // Send ready SMS or Email
             foreach (var notifier in _notifier)
             {
-                await notifier.SendAsync(order, NotificationType.Completion);
+                await notifier.SendCompletionAsync(order, user);
             }
 
             // give to ML training service. Might not need this.
@@ -90,58 +96,86 @@ namespace ClipperCoffeeCorner.Services
         }
 
 
-
-        //=============================================
-        //==== For testing stuff. Can delete later ====
-        //=============================================
-
-        public void ForceRetrain() => _estimator.RetrainIfNeeded();
-        public IReadOnlyList<Order> GetActiveQueue() => _orders.GetActiveOrders();
-        public int GetCurrentQueueLength() => _orders.GetCurrentLength();
-        public int GetQueuePosition(Order order) => _orders.GetPosition(order);
-
-        public void PrintSystemState()
+        // Create test object
+        // delete later
+        public static Order CreateTestOrder()
         {
-            _logger.LogInformation("=== CAFE WAIT SYSTEM STATE ===");
-            _logger.LogInformation($"Active Orders: {_orders.GetCurrentLength()}");
-
-            foreach (var o in _orders.GetActiveOrders().OrderBy(o => o.PlacedAt))
+            return new Order
             {
-                var pos = _orders.GetPosition(o);
-                _logger.LogInformation(
-                    " [{Pos}] {OrderId} | {Items} | Est: {Est:F1} min | Placed: {Ago} ago",
-                    pos, o.OrderId, o.LineItems, o.EstimatedWaitTime,
-                    FormatTimeAgo(o.PlacedAt));
-            }
-            _logger.LogInformation("=== END STATE ===");
-        }
+                OrderId = 1001,
+                IdempotencyKey = "idemp-12345-abcde-67890",
+                CustomerId = "cust_789",
+                Currency = "USD",
 
-        private string FormatTimeAgo(DateTimeOffset dt)
+                // Line Items: Two coffee drinks
+                LineItems = new List<LineItem>
         {
-            var span = DateTimeOffset.Now - dt;
-            return span.TotalMinutes < 60
-                ? $"{span.TotalMinutes:F0}m ago"
-                : $"{span.TotalHours:F1}h ago";
+            new LineItem
+            {
+                CatalogObjectId = "CAT_LATTE_001",
+                Name = "Latte",
+                BasePriceMoney = new Money { Amount = 450, Currency = "USD" }, // $4.50
+                Quantity = "1"
+            },
+            new LineItem
+            {
+                CatalogObjectId = "CAT_CROISSANT_002",
+                Name = "Butter Croissant",
+                BasePriceMoney = new Money { Amount = 375, Currency = "USD" }, // $3.75
+                Quantity = "2"
+            }
+        },
+
+                // Taxes: 8.25% sales tax applied at order level
+                Taxes = new List<TaxLine>
+        {
+            new TaxLine
+            {
+                OrderId = "1001",
+                Type = "ADDITIVE",
+                Name = "CA Sales Tax",
+                Percentage = "8.25",
+                Scope = "ORDER"
+            }
+        },
+
+                // Discounts: None for now (or add one if needed)
+                Discounts = new List<DiscountLine>(),
+
+                // Service Charges: e.g., auto-gratuity or delivery fee
+                ServiceCharges = new List<ServiceCharge>
+        {
+            new ServiceCharge
+            {
+                OrderId = "1001",
+                Name = "Counter Service",
+                Percentage = "0",
+                Taxable = false
+            }
+        },
+
+                // Computed totals (in cents)
+                SubtotalMoney = 450 + (375 * 2),         // $4.50 + $7.50 = $12.00 → 1200 cents
+                TotalTaxMoney = 99,                      // ~8.25% of $12.00 ≈ $0.99
+                TotalDiscountMoney = 0,
+                TotalMoney = 1200 + 99,                  // $12.99
+
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+                PlacedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+                CompletedAt = null, // not ready yet
+
+                Alterations = new List<OrderAlteration>
+        {
+            new OrderAlteration
+            {
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-8),
+                Description = "Order created via mobile app",
+                ChangedBy = "mobile-app-v2"
+            }
+        },
+
+                Status = OrderStatus.Placed
+            };
         }
-    }
-
-    // ML Data Classes
-    // This will be replaced by whatever the actual ML service needs
-    public class OrderData
-    {
-        public float ItemCount { get; set; } // Item count in the order
-        public float QueueLength { get; set; } // Number of orders ahead in the queue
-        public float HourOfDay { get; set; }
-        public float DayOfWeek { get; set; }
-        public float TotalItemsAhead { get; set; } // Total number of items ahead in the queue
-        public float WaitMinutes { get; set; }
-        [VectorType(Constants.MaxMenuId)]
-        public float[] ItemsAhead { get; set; } = new float[Constants.MaxMenuId];
-    }
-
-    public class WaitPrediction
-    {
-        [ColumnName("Score")]
-        public float WaitMinutes { get; set; }
     }
 }
