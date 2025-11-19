@@ -17,9 +17,8 @@ namespace ClipperCoffeeCorner.Models
         [Column(TypeName = "decimal(10,2)")]
         public decimal UnitPrice { get; set; }
 
-        // Computed: Quantity * UnitPrice
+        // Computed in SQL: Quantity * UnitPrice
         [Column(TypeName = "decimal(10,2)")]
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public decimal LineTotal { get; private set; }
 
         // Navigation

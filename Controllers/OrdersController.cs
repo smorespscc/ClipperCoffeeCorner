@@ -69,7 +69,7 @@ namespace ClipperCoffeeCorner.Controllers
                     CombinationId = line.CombinationId,
                     Quantity = line.Quantity,
                     UnitPrice = unitPrice
-                    // LineTotal computed by DB
+                    // LineTotal is computed in SQL, not set here
                 });
             }
 
@@ -122,7 +122,7 @@ namespace ClipperCoffeeCorner.Controllers
                     DrinkName = oi.Combination!.MenuItem!.Name,
                     oi.Quantity,
                     oi.UnitPrice,
-                    oi.LineTotal
+                    oi.LineTotal   // ✅ read-only is fine
                 })
             });
         }

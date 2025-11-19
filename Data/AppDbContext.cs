@@ -1,7 +1,5 @@
 ﻿using ClipperCoffeeCorner.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace ClipperCoffeeCorner.Data
 {
@@ -34,6 +32,12 @@ namespace ClipperCoffeeCorner.Data
 
             modelBuilder.Entity<CombinationOption>()
                 .HasKey(c => new { c.CombinationId, c.OptionValueId });
+
+            // OrderItem.LineTotal is computed by SQL (Quantity * UnitPrice)
+            // so EF should not try to insert/update it.
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.LineTotal)
+                .HasComputedColumnSql("[Quantity] * [UnitPrice]", stored: true);
         }
     }
 }
