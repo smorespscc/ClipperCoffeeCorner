@@ -53,5 +53,31 @@ namespace ClipperCoffeeCorner.Controllers
                 return BadRequest(new { Error = ex.Message });
             }
         }
+
+        // this depends on DB so will be changed later
+        // gets popular items of a given menu category
+        // maybe if no category is given it just gives overall popular items
+        [HttpGet("get-popular-items")]
+        public async Task<IActionResult> GetPopularItems([FromBody] Guid MenuCategory)
+        {
+            try
+            {
+                var popularItems = await _service.GetPopularItemsAsync(MenuCategory);
+                return Ok(new
+                {
+                    Message = "Popular items retrieved successfully!",
+                    Items = popularItems.Select(item => new
+                    {
+                        item.MenuItemId, // id of items
+                        item.Name,       // name of items
+                        item.OrderCount  // number of times item was ordered (how popular it is)
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Error = ex.Message });
+            }
+        }
     }
 }

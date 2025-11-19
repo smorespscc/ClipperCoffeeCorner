@@ -59,8 +59,6 @@ namespace ClipperCoffeeCorner.Services
             return estimatedWaitTime;
         }
 
-
-
         public async Task<Order> CompleteOrderAsync(Guid orderId)
         {
             // INSERT: retrieve order from sql table
@@ -93,6 +91,39 @@ namespace ClipperCoffeeCorner.Services
             _estimator.AddCompletedForTraining(order);
 
             return order;
+        }
+
+
+        // subject to changes based on DB team service
+        public async Task<List<PopularItemsModel>> GetPopularItemsAsync(Guid menuCategory)
+        {
+            // INSERT: call to DB to get popular items from orders table
+            // maybe just get a view of last 100 orders or something idk
+
+            await Task.Delay(100); // simulate async DB call
+
+            // placeholder hardcoded list for now
+            return new List<PopularItemsModel>
+            {
+                new PopularItemsModel
+                {
+                    MenuItemId = Guid.NewGuid(),
+                    Name = "Cappuccino",
+                    OrderCount = 150
+                },
+                new PopularItemsModel
+                {
+                    MenuItemId = Guid.NewGuid(),
+                    Name = "Espresso",
+                    OrderCount = 120
+                },
+                new PopularItemsModel
+                {
+                    MenuItemId = Guid.NewGuid(),
+                    Name = "Blueberry Muffin",
+                    OrderCount = 90
+                }
+            };
         }
 
 

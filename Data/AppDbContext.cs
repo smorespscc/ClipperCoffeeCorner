@@ -5,8 +5,7 @@ using System.Text.Json;
 using ClipperCoffeeCorner.Models;
 using ClipperCoffeeCorner.Options;
 
-// For testing
-// Junk
+// Placeholder stuff for now
 
 namespace ClipperCoffeeCorner.Data
 {
@@ -16,7 +15,7 @@ namespace ClipperCoffeeCorner.Data
 
         public DbSet<Order> Orders => Set<Order>();
 
-        
-        
+        public DbSet<User> Users => Set<User>();
+
     }
 }
