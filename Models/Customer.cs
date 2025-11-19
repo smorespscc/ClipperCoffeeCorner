@@ -10,7 +10,7 @@ namespace ClipperCoffeeCorner.Models
 
         [Required]
         [EmailAddress]
-        public required string ClipperId { get; set; } // Customer's email or ClipperID
+        public required string Email { get; set; } // Customer's email or ClipperID
 
         public required string SquareCustomerId { get; set; } // Square-specific customer ID
 
