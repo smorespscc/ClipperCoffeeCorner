@@ -19,14 +19,19 @@ Connection string is in `appsettings.json`:
     "DefaultConnection": "Server=tcp:cafecorner.database.windows.net,1433;Database=Cafe Corner;User ID=cafeuser;Password=...;Encrypt=True;TrustServerCertificate=False;"
   }
 }
+---------------
+
 For local development you can swap this to localdb instead:
 "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=ClipperCoffeeCorner;Trusted_Connection=True;TrustServerCertificate=True;"
+------------
 
 The app uses this connection string in Program.cs:
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-    Running the API
+------------
+
+Running the API
 
 Start the project in Visual Studio (or dotnet run).
 
@@ -34,7 +39,8 @@ Check the HTTPS URL in the console (for example: https://localhost:7001).
 
 Use that URL as the base for all API calls.
 
-Quick PowerShell test script
+Quick PowerShell test script:
+
 function Invoke-Safe {
     param(
         [Parameter(Mandatory)][string]$Method,
@@ -62,13 +68,20 @@ function Invoke-Safe {
 }
 
 $base = "https://localhost:7001"
+
+---------------
+
 Example API calls
 
 All menu categories:
 Invoke-Safe -Method Get -Uri "$base/api/menu/categories" | ConvertTo-Json -Depth 3
 
+---------
+
 All menu items:
 Invoke-Safe -Method Get -Uri "$base/api/menu/items" | ConvertTo-Json -Depth 3
+
+---------
 
 Create a guest order (no user):
 $body = @{
@@ -80,6 +93,8 @@ $body = @{
 
 Invoke-Safe -Method Post -Uri "$base/api/orders" -Body $body
 
+------------
+
 Create an order for logged-in user (example UserId = 1 in dbo.User):
 $body = @{
     userId = 1
@@ -90,11 +105,17 @@ $body = @{
 
 Invoke-Safe -Method Post -Uri "$base/api/orders" -Body $body
 
+------------
+
 Get all orders:
 Invoke-Safe -Method Get -Uri "$base/api/orders" | ConvertTo-Json -Depth 3
 
+------------
+
 Get orders for a specific user:
 Invoke-Safe -Method Get -Uri "$base/api/orders?userId=1" | ConvertTo-Json -Depth 3
+
+------------
 
 Update order status:
 $body = @{ status = "Completed" } | ConvertTo-Json
