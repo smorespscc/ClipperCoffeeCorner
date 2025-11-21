@@ -15,534 +15,603 @@
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/menu.css" />
 
-  <style>
-    /* Keep styles minimal and Bootstrap-compatible */
-
-    /* images scale consistently and do not dominate */
-    .carousel-img,
-    .carousel-img-lg {
-      width: 100%;
-      height: 220px;               /* consistent crop height for normal carousels */
-      object-fit: cover;           /* preserves aspect ratio, crops excess */
-      display: block;
-      border-radius: 12px;
-    }
-    .carousel-img-lg {
-      height: 300px;               /* larger for the big carousels */
-    }
-
-    /* caption overlay for each item (prevents overlap between items) */
-    .carousel-item {
-      position: relative;          /* caption absolute positioned relative to this */
-    }
-
-    .carousel-caption-text {
-      position: absolute;
-      left: 8px;
-      right: 8px;
-      bottom: 8px;
-      margin: 0 auto;
-      text-align: center;
-      background: rgba(0,0,0,0.5);
-      color: #fff;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      max-width: calc(100% - 16px);
-      box-sizing: border-box;
-      pointer-events: none;        /* clicks pass through to image (so modal triggers) */
-    }
-
-    /* keep carousel controls visible and sized */
-    .carousel-control-prev-icon,
-    .carousel-control-next-icon {
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
-    }
-
-    /* small visual niceties */
-    .section { margin-bottom: 6px; }
-    .menu-card { max-width: 980px; }
-    .btn-mic { width: 48px; }
-
-    /* Selected indicator badge (added when an item is chosen) */
-    .selected-indicator {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(25, 135, 84, 0.95); /* Bootstrap success */
-      color: #fff;
-      border-radius: 999px;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      z-index: 3;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-  </style>
+  
 </head>
 <body>
 
-  <div class="container my-4">
-    <div class="menu-card mx-auto shadow-sm">
+    <div class="container my-4">
+        <div class="menu-card mx-auto shadow-sm">
 
-      <!-- Header -->
-      <header class="menu-header text-center py-3">
-        <h2 class="mb-1">MENU</h2>
-        <div class="current-serving small">
-          Currently Serving <span class="serving-type">Breakfast</span>
-          <span class="serving-hours">| 8:00am - 10:30am</span>
-        </div>
-      </header>
+            <!-- Viewing Mode Banner (hidden by default) -->
+            <div id="viewingModeBanner" class="viewing-mode-banner" style="display: none;">
+                <i class="bi bi-eye"></i>
+                <span id="viewingModeText">Viewing Menu Only - We're Currently Closed</span>
+            </div>
 
-      <div class="menu-body p-3">
-
-        <!-- Row 1: Recent + Saved Orders -->
-        <div class="row gx-3 gy-3 mb-2">
-          <div class="col-12 col-md-6">
-            <div class="section">
-              <h5 class="section-title">Recent Orders</h5>
-              <div id="carouselRecent" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
-                <div class="carousel-inner">
-                  <div class="carousel-item active text-center">
-                    <img src="https://dairyfarmersofcanada.ca/sites/default/files/styles/recipe_image/public/image_file_browser/conso_recipe/2022/Capuccino.jpg.jpeg?itok=J1pWPwe2"
-                         class="d-block mx-auto rounded carousel-img menu-item"
-                         alt="Cappuccino"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Cappuccino">
-                    <div class="carousel-caption-text">Cappuccino — Small</div>
-                  </div>
-                  <div class="carousel-item text-center">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzEdVdApltOZXmjDqHPo_kZTURgwuOcdel4g&s"
-                         class="d-block mx-auto rounded carousel-img menu-item"
-                         alt="Vanilla Latte"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Vanilla Latte">
-                    <div class="carousel-caption-text">Vanilla Latte — Medium</div>
-                  </div>
+            <!-- Header -->
+            <header class="menu-header text-center py-4">
+                <h2 class="mb-3">MENU</h2>
+                <div class="current-serving-container">
+                    <div class="serving-status-badge">
+                        <i class="bi bi-clock-fill me-2"></i>
+                        <span id="servingStatus">Currently Serving</span>
+                    </div>
+                    <div class="serving-selector dropdown">
+                        <button class="serving-dropdown-btn dropdown-toggle" type="button" id="servingDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="serving-icon" id="servingIcon">
+                                <i class="bi bi-sunrise-fill"></i>
+                            </span>
+                            <span class="serving-type-text" id="servingType">Breakfast</span>
+                            <span class="serving-hours-text" id="servingHours">8:00am - 10:30am</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-center" aria-labelledby="servingDropdown">
+                            <li>
+                                <a class="dropdown-item menu-option" href="#" data-menu="breakfast">
+                                    <i class="bi bi-sunrise-fill me-2"></i>
+                                    <span class="menu-name">Breakfast</span>
+                                    <span class="menu-time">8:00am - 10:30am</span>
+                                    <span class="active-badge">Active</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item menu-option" href="#" data-menu="lunch">
+                                    <i class="bi bi-sun-fill me-2"></i>
+                                    <span class="menu-name">Lunch</span>
+                                    <span class="menu-time">10:30am - 2:00pm</span>
+                                    <span class="active-badge">Active</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselRecent" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselRecent" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                  <span class="visually-hidden">Next</span>
-                </button>
-              </div>
-            </div>
-          </div>
+            </header>
 
-          <div class="col-12 col-md-6">
-            <div class="section">
-              <h5 class="section-title">Saved Orders</h5>
-              <div id="carouselSaved" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
-                <div class="carousel-inner">
-                  <div class="carousel-item active text-center">
-                    <img src="https://dairyfarmersofcanada.ca/sites/default/files/styles/recipe_image/public/image_file_browser/conso_recipe/2022/Capuccino.jpg.jpeg?itok=J1pWPwe2"
-                         class="d-block mx-auto rounded carousel-img menu-item"
-                         alt="Butter Croissant"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Butter Croissant">
-                    <div class="carousel-caption-text">Butter Croissant</div>
-                  </div>
-                  <div class="carousel-item text-center">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzEdVdApltOZXmjDqHPo_kZTURgwuOcdel4g&s"
-                         class="d-block mx-auto rounded carousel-img menu-item"
-                         alt="Blueberry Muffin"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Blueberry Muffin">
-                    <div class="carousel-caption-text">Blueberry Muffin</div>
-                  </div>
+            <div class="menu-body p-3">
+
+                <!-- Row 1: Recent + Saved Orders -->
+                <div class="row gx-3 gy-3 mb-2">
+                    <div class="col-12 col-md-6">
+                        <div class="section">
+                            <h5 class="section-title">Recent Orders</h5>
+                            <div id="carouselRecent" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active text-center">
+                                        <img src="https://images.unsplash.com/photo-1572442388796-11668a67e53d?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img menu-item"
+                                             alt="Cappuccino"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Cappuccino"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Cappuccino — Small</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img menu-item"
+                                             alt="Vanilla Latte"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Vanilla Latte"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Vanilla Latte — Medium</div>
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselRecent" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselRecent" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="section">
+                            <h5 class="section-title">Saved Orders</h5>
+                            <div id="carouselSaved" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active text-center">
+                                        <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img menu-item"
+                                             alt="Butter Croissant"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Butter Croissant"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Butter Croissant</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1607958996333-41aef7caefaa?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img menu-item"
+                                             alt="Blueberry Muffin"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Blueberry Muffin"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Blueberry Muffin</div>
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselSaved" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselSaved" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselSaved" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselSaved" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Row 2: Trending + Specials -->
-        <div class="row gx-3 gy-3 mb-2">
-          <div class="col-12 col-md-6">
-            <div class="section">
-              <h5 class="section-title">Trending</h5>
-              <div id="carouselTrending" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
-                <div class="carousel-inner">
-                  <div class="carousel-item active text-center">
-                    <img src="https://dairyfarmersofcanada.ca/sites/default/files/styles/recipe_image/public/image_file_browser/conso_recipe/2022/Capuccino.jpg.jpeg?itok=J1pWPwe2"
-                         class="d-block mx-auto rounded carousel-img menu-item"
-                         alt="Iced Mocha"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Iced Mocha">
-                    <div class="carousel-caption-text">Iced Mocha</div>
-                  </div>
-                  <div class="carousel-item text-center">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzEdVdApltOZXmjDqHPo_kZTURgwuOcdel4g&s"
-                         class="d-block mx-auto rounded carousel-img menu-item"
-                         alt="Double Espresso"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Double Espresso">
-                    <div class="carousel-caption-text">Double Espresso</div>
-                  </div>
+                <!-- Row 2: Trending + Specials -->
+                <div class="row gx-3 gy-3 mb-2">
+                    <div class="col-12 col-md-6">
+                        <div class="section">
+                            <h5 class="section-title">Trending</h5>
+                            <div id="carouselTrending" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active text-center">
+                                        <img src="https://images.unsplash.com/photo-1570968914863-906c88a5e604?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img menu-item"
+                                             alt="Iced Mocha"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Iced Mocha"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Iced Mocha</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img menu-item"
+                                             alt="Double Espresso"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Double Espresso"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Double Espresso</div>
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselTrending" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselTrending" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <div class="section">
+                            <h5 class="section-title">Specials</h5>
+                            <div id="carouselSpecials" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active text-center">
+                                        <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img menu-item"
+                                             alt="Breakfast Sandwich"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Breakfast Sandwich"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Breakfast Sandwich</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1528735602780-2552fd46c7af?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img menu-item"
+                                             alt="Bagel & Cream Cheese"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Bagel & Cream Cheese"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Bagel & Cream Cheese</div>
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselSpecials" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselSpecials" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselTrending" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselTrending" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                </button>
-              </div>
-            </div>
-          </div>
 
-          <div class="col-12 col-md-6">
-            <div class="section">
-              <h5 class="section-title">Specials</h5>
-              <div id="carouselSpecials" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
-                <div class="carousel-inner">
-                  <div class="carousel-item active text-center">
-                    <img src="https://dairyfarmersofcanada.ca/sites/default/files/styles/recipe_image/public/image_file_browser/conso_recipe/2022/Capuccino.jpg.jpeg?itok=J1pWPwe2"
-                         class="d-block mx-auto rounded carousel-img menu-item"
-                         alt="Breakfast Sandwich"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Breakfast Sandwich">
-                    <div class="carousel-caption-text">Breakfast Sandwich</div>
-                  </div>
-                  <div class="carousel-item text-center">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzEdVdApltOZXmjDqHPo_kZTURgwuOcdel4g&s"
-                         class="d-block mx-auto rounded carousel-img menu-item"
-                         alt="Bagel & Cream Cheese"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Bagel & Cream Cheese">
-                    <div class="carousel-caption-text">Bagel & Cream Cheese</div>
-                  </div>
+                <!-- Row 3: Drink Menu -->
+                <div class="row gx-3 gy-3 mb-2">
+                    <div class="col-12">
+                        <div class="section">
+                            <h5 class="section-title">Drink Menu</h5>
+                            <div id="carouselDrinks" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active text-center">
+                                        <img src="https://images.unsplash.com/photo-1497935586351-b67a49e012bf?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="House Brew"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="House Brew"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">House Brew</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Chai Tea Latte"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Chai Tea Latte"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Chai Tea Latte</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1517487881594-2787fef5ebf7?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Espresso"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Espresso"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Espresso</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Americano"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Americano"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Americano</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1572442388796-11668a67e53d?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Macchiato"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Macchiato"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Macchiato</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1570968914863-906c88a5e604?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Mocha"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Mocha"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Mocha</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1559056199-641a0ac8b55e?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Flat White"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Flat White"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Flat White</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1572442388796-11668a67e53d?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Cortado"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Cortado"
+                                             data-type="drink">
+                                        <div class="carousel-caption-text">Cortado</div>
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselDrinks" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselDrinks" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselSpecials" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselSpecials" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Row 3: Drink Menu -->
-        <div class="row gx-3 gy-3 mb-2">
-          <div class="col-12">
-            <div class="section">
-              <h5 class="section-title">Drink Menu</h5>
-              <div id="carouselDrinks" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
-                <div class="carousel-inner">
-                  <div class="carousel-item active text-center">
-                    <img src="https://dairyfarmersofcanada.ca/sites/default/files/styles/recipe_image/public/image_file_browser/conso_recipe/2022/Capuccino.jpg.jpeg?itok=J1pWPwe2"
-                         class="d-block mx-auto rounded carousel-img-lg menu-item"
-                         alt="House Brew"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="House Brew">
-                    <div class="carousel-caption-text">House Brew</div>
-                  </div>
-                  <div class="carousel-item text-center">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzEdVdApltOZXmjDqHPo_kZTURgwuOcdel4g&s"
-                         class="d-block mx-auto rounded carousel-img-lg menu-item"
-                         alt="Chai Tea Latte"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Chai Tea Latte">
-                    <div class="carousel-caption-text">Chai Tea Latte</div>
-                  </div>
+                <!-- Row 4: Food Menu -->
+                <div class="row gx-3 gy-3 mb-2">
+                    <div class="col-12">
+                        <div class="section">
+                            <h5 class="section-title">Food Menu</h5>
+                            <div id="carouselFood" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active text-center">
+                                        <img src="https://images.unsplash.com/photo-1528207776546-365bb710ee93?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Pancake Stack"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Pancake Stack"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Pancake Stack</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1612929633736-8fe44a7ecbe9?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Cheese Omelette"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Cheese Omelette"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Cheese Omelette</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1525351484163-7529414344d8?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="French Toast"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="French Toast"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">French Toast</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1506084868230-bb9d95c24759?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Avocado Toast"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Avocado Toast"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Avocado Toast</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Breakfast Burrito"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Breakfast Burrito"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Breakfast Burrito</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1551782450-17144efb9c50?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Belgian Waffle"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Belgian Waffle"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Belgian Waffle</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1484723091739-30a097e8f929?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Eggs Benedict"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Eggs Benedict"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Eggs Benedict</div>
+                                    </div>
+                                    <div class="carousel-item text-center">
+                                        <img src="https://images.unsplash.com/photo-1512058564366-18510be2db19?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                             class="d-block mx-auto rounded carousel-img-lg menu-item"
+                                             alt="Breakfast Bowl"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#itemModal"
+                                             data-item="Breakfast Bowl"
+                                             data-type="food">
+                                        <div class="carousel-caption-text">Breakfast Bowl</div>
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselFood" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselFood" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselDrinks" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselDrinks" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Row 4: Food Menu -->
-        <div class="row gx-3 gy-3 mb-2">
-          <div class="col-12">
-            <div class="section">
-              <h5 class="section-title">Food Menu</h5>
-              <div id="carouselFood" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
-                <div class="carousel-inner">
-                  <div class="carousel-item active text-center">
-                    <img src="https://dairyfarmersofcanada.ca/sites/default/files/styles/recipe_image/public/image_file_browser/conso_recipe/2022/Capuccino.jpg.jpeg?itok=J1pWPwe2"
-                         class="d-block mx-auto rounded carousel-img-lg menu-item"
-                         alt="Pancake Stack"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Pancake Stack">
-                    <div class="carousel-caption-text">Pancake Stack</div>
-                  </div>
-                  <div class="carousel-item text-center">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzEdVdApltOZXmjDqHPo_kZTURgwuOcdel4g&s"
-                         class="d-block mx-auto rounded carousel-img-lg menu-item"
-                         alt="Cheese Omelette"
-                         data-bs-toggle="modal"
-                         data-bs-target="#itemModal"
-                         data-item="Cheese Omelette">
-                    <div class="carousel-caption-text">Cheese Omelette</div>
-                  </div>
+                <!-- Special Requests -->
+                <div class="row gx-3 gy-3 mb-2">
+                    <div class="col-12">
+                        <div class="section">
+                            <h5 class="section-title">Special Requests</h5>
+                            <div class="input-group">
+                                <input id="specialRequests" name="specialRequests" type="text" class="form-control" placeholder="Start typing or speaking..." aria-label="Special requests">
+                                <button id="micButton" class="btn btn-mic" type="button" title="Tap to speak">
+                                    <i class="bi bi-mic-fill"></i>
+                                </button>
+                            </div>
+                            <div class="form-text small text-muted mt-2">
+                                Add any allergy notes, extra sauces, or preparation preferences.
+                            </div>
+                            <!-- Hidden field to carry special requests forward -->
+                            <input type="hidden" id="hiddenSpecialRequests" name="hiddenSpecialRequests">
+                        </div>
+                    </div>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselFood" data-bs-slide="prev">
-                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselFood" data-bs-slide="next">
-                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                </button>
-              </div>
+
+            </div> <!-- /menu-body -->
+            <!-- Footer actions -->
+            <footer class="menu-footer d-flex">
+                <button id="cancelBtn" class="btn btn-cancel flex-fill">CANCEL</button>
+                <button id="orderBtn" class="btn btn-order flex-fill">ORDER</button>
+            </footer>
+
+        </div> <!-- /menu-card -->
+    </div> <!-- /container -->
+    <!-- No Items Selected Modal -->
+    <div class="modal fade" id="noItemsModal" tabindex="-1" aria-labelledby="noItemsLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-4">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <span class="text-danger display-4">✖</span>
+                    </div>
+                    <h4 id="noItemsLabel">No Items Selected</h4>
+                    <p class="text-muted">Please add at least one item to your order before proceeding to checkout.</p>
+                </div>
             </div>
-          </div>
         </div>
-
-        <!-- Special Requests -->
-        <div class="row gx-3 gy-3 mb-2">
-          <div class="col-12">
-            <div class="section">
-              <h5 class="section-title">Special Requests</h5>
-              <div class="input-group">
-                <input id="specialRequests" name="specialRequests" type="text" class="form-control" placeholder="Start typing or speaking..." aria-label="Special requests">
-                <button id="micButton" class="btn btn-mic" type="button" title="Tap to speak">
-                  <i class="bi bi-mic-fill"></i>
-                </button>
-              </div>
-              <div class="form-text small text-muted mt-2">
-                Add any allergy notes, extra sauces, or preparation preferences.
-              </div>
-              <!-- Hidden field to carry special requests forward -->
-              <input type="hidden" id="hiddenSpecialRequests" name="hiddenSpecialRequests">
-            </div>
-          </div>
-        </div>
-
-      </div> <!-- /menu-body -->
-      <!-- Footer actions -->
-      <footer class="menu-footer d-flex">
-        <button id="cancelBtn" class="btn btn-cancel flex-fill" onclick="window.location.href='../index.html'">CANCEL</button>
-        <button id="orderBtn" class="btn btn-order flex-fill">ORDER</button>
-      </footer>
-
-    </div> <!-- /menu-card -->
-  </div> <!-- /container -->
-
-  <!-- No Items Selected Modal -->
-<div class="modal fade" id="noItemsModal" tabindex="-1" aria-labelledby="noItemsLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content text-center p-4">
-      <div class="modal-body">
-        <div class="mb-3">
-          <span class="text-danger display-4">✖</span>
-        </div>
-        <h4 id="noItemsLabel">No Items Selected</h4>
-        <p class="text-muted">Please add at least one item to your order before proceeding to checkout.</p>
-      </div>
     </div>
-  </div>
-</div>
 
-  <!-- Item Customization Modal -->
-  <div class="modal fade" id="itemModal" tabindex="-1" aria-labelledby="itemModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content p-4">
-        <div class="modal-header">
-          <h5 class="modal-title" id="itemModalLabel">Customize Item</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Cancel Order Confirmation Modal -->
+    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="cancelOrderLabel">Cancel Order?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-0">Are you sure you want to cancel your order? All selected items will be removed.</p>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Order</button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelOrder">Yes, Cancel Order</button>
+                </div>
+            </div>
         </div>
-
-        <div class="modal-body">
-          <!-- Categories of modifiers -->
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <h6>Style</h6>
-              <div><input type="checkbox" id="hot"> <label for="hot">Hot</label></div>
-              <div><input type="checkbox" id="iced"> <label for="iced">Iced</label></div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <h6>Milk</h6>
-              <div><input type="checkbox" id="dairy"> <label for="dairy">Dairy</label></div>
-              <div><input type="checkbox" id="oat"> <label for="oat">Oat</label></div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <h6>Flavors</h6>
-              <div><input type="checkbox" id="vanilla"> <label for="vanilla">Vanilla</label></div>
-              <div><input type="checkbox" id="mint"> <label for="mint">Mint</label></div>
-              <div><input type="checkbox" id="cinnamon"> <label for="cinnamon">Cinnamon</label></div>
-              <div><input type="checkbox" id="hazelnut"> <label for="hazelnut">Hazelnut</label></div>
-            </div>
-            <div class="col-md-6 mb-3">
-              <h6>Additions</h6>
-              <div><input type="checkbox" id="whip"> <label for="whip">Whip Cream</label></div>
-              <div><input type="checkbox" id="extraShot"> <label for="extraShot">Extra Shot</label></div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-12 mb-3">
-              <h6>Restrictions</h6>
-              <div><input type="checkbox" id="sugarFree"> <label for="sugarFree">Sugar Free</label></div>
-              <div><input type="checkbox" id="caffeineFree"> <label for="caffeineFree">Caffeine Free</label></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-order" id="applyModifiers">Apply</button>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Item Customization Modal -->
+    <div class="modal fade" id="itemModal" tabindex="-1" aria-labelledby="itemModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content p-4">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="itemModalLabel">Customize Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
 
-  <!-- JS Functionality -->
-<script>
-  // Helpers for selected items array
-  function getSelectedItems() {
-    return JSON.parse(localStorage.getItem('selectedItems') || '[]');
-  }
-  function saveSelectedItems(items) {
-    localStorage.setItem('selectedItems', JSON.stringify(items));
-  }
+                <div class="modal-body">
+                    <!-- Tab System for Multiple Instances -->
+                    <div class="instance-tabs-container mb-3">
+                        <div class="instance-tabs-wrapper">
+                            <div id="instanceTabs" class="instance-tabs d-flex align-items-center gap-2">
+                                <!-- Tabs will be dynamically added here -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary add-tab-btn" id="addInstanceTab" title="Add another instance">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                    </div>
 
-  let currentItemName = null;
-  let currentTriggerImg = null;
-  const itemModalEl = document.getElementById('itemModal');
+                    <!-- Drink Customization Options -->
+                    <div id="drinkOptions" class="item-options">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h6>Style</h6>
+                                <div><input type="checkbox" id="hot" name="drink-hot"> <label for="hot">Hot</label></div>
+                                <div><input type="checkbox" id="iced" name="drink-iced"> <label for="iced">Iced</label></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6>Milk</h6>
+                                <div><input type="checkbox" id="dairy" name="drink-dairy"> <label for="dairy">Dairy</label></div>
+                                <div><input type="checkbox" id="oat" name="drink-oat"> <label for="oat">Oat</label></div>
+                                <div><input type="checkbox" id="almond" name="drink-almond"> <label for="almond">Almond</label></div>
+                                <div><input type="checkbox" id="soy" name="drink-soy"> <label for="soy">Soy</label></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h6>Flavors</h6>
+                                <div><input type="checkbox" id="vanilla" name="drink-vanilla"> <label for="vanilla">Vanilla</label></div>
+                                <div><input type="checkbox" id="mint" name="drink-mint"> <label for="mint">Mint</label></div>
+                                <div><input type="checkbox" id="cinnamon" name="drink-cinnamon"> <label for="cinnamon">Cinnamon</label></div>
+                                <div><input type="checkbox" id="hazelnut" name="drink-hazelnut"> <label for="hazelnut">Hazelnut</label></div>
+                                <div><input type="checkbox" id="caramel" name="drink-caramel"> <label for="caramel">Caramel</label></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6>Additions</h6>
+                                <div><input type="checkbox" id="whip" name="drink-whip"> <label for="whip">Whip Cream</label></div>
+                                <div><input type="checkbox" id="extraShot" name="drink-extraShot"> <label for="extraShot">Extra Shot</label></div>
+                                <div><input type="checkbox" id="decaf" name="drink-decaf"> <label for="decaf">Decaf</label></div>
+                            </div>
+                        </div>
 
-  if (itemModalEl) {
-    itemModalEl.addEventListener('show.bs.modal', function (event) {
-      const trigger = event.relatedTarget;
-      if (trigger && trigger.getAttribute) {
-        currentItemName = trigger.getAttribute('data-item') || trigger.alt || 'Item';
-        currentTriggerImg = trigger;
-        document.getElementById('itemModalLabel').textContent = 'Customize ' + currentItemName;
-      }
-      // Reset all checkboxes each time modal opens
-      document.querySelectorAll('#itemModal input[type=checkbox]').forEach(cb => cb.checked = false);
-    });
-  }
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <h6>Restrictions</h6>
+                                <div><input type="checkbox" id="sugarFree" name="drink-sugarFree"> <label for="sugarFree">Sugar Free</label></div>
+                                <div><input type="checkbox" id="caffeineFree" name="drink-caffeineFree"> <label for="caffeineFree">Caffeine Free</label></div>
+                            </div>
+                        </div>
+                    </div>
 
-  // Apply modifiers: collect checked modifiers and close modal
-  document.getElementById('applyModifiers').addEventListener('click', function () {
-    if (!currentItemName) {
-      alert("Please select an item before applying modifiers.");
-      return;
-    }
+                    <!-- Food Customization Options -->
+                    <div id="foodOptions" class="item-options" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h6>Cooking Preferences</h6>
+                                <div><input type="checkbox" id="wellDone" name="food-wellDone"> <label for="wellDone">Well Done</label></div>
+                                <div><input type="checkbox" id="medium" name="food-medium"> <label for="medium">Medium</label></div>
+                                <div><input type="checkbox" id="light" name="food-light"> <label for="light">Light</label></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6>Sides</h6>
+                                <div><input type="checkbox" id="hashBrowns" name="food-hashBrowns"> <label for="hashBrowns">Hash Browns</label></div>
+                                <div><input type="checkbox" id="fruit" name="food-fruit"> <label for="fruit">Fresh Fruit</label></div>
+                                <div><input type="checkbox" id="toast" name="food-toast"> <label for="toast">Toast</label></div>
+                            </div>
+                        </div>
 
-    const checked = Array.from(document.querySelectorAll('#itemModal input[type=checkbox]:checked'))
-      .map(cb => {
-        const lbl = cb.nextElementSibling;
-        return (lbl && lbl.textContent) ? lbl.textContent.trim() : cb.id;
-      });
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h6>Additions</h6>
+                                <div><input type="checkbox" id="extraCheese" name="food-extraCheese"> <label for="extraCheese">Extra Cheese</label></div>
+                                <div><input type="checkbox" id="bacon" name="food-bacon"> <label for="bacon">Bacon</label></div>
+                                <div><input type="checkbox" id="avocado" name="food-avocado"> <label for="avocado">Avocado</label></div>
+                                <div><input type="checkbox" id="sausage" name="food-sausage"> <label for="sausage">Sausage</label></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6>Dietary Restrictions</h6>
+                                <div><input type="checkbox" id="glutenFree" name="food-glutenFree"> <label for="glutenFree">Gluten Free</label></div>
+                                <div><input type="checkbox" id="vegetarian" name="food-vegetarian"> <label for="vegetarian">Vegetarian</label></div>
+                                <div><input type="checkbox" id="vegan" name="food-vegan"> <label for="vegan">Vegan</label></div>
+                                <div><input type="checkbox" id="noDairy" name="food-noDairy"> <label for="noDairy">No Dairy</label></div>
+                            </div>
+                        </div>
 
-    const itemObj = {
-      name: currentItemName,
-      modifiers: checked,
-      specialRequests: document.getElementById('specialRequests').value || ''
-    };
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <h6>Preparation Notes</h6>
+                                <div><input type="checkbox" id="noOnions" name="food-noOnions"> <label for="noOnions">No Onions</label></div>
+                                <div><input type="checkbox" id="noTomatoes" name="food-noTomatoes"> <label for="noTomatoes">No Tomatoes</label></div>
+                                <div><input type="checkbox" id="extraCrispy" name="food-extraCrispy"> <label for="extraCrispy">Extra Crispy</label></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    const items = getSelectedItems();
-    items.push(itemObj);
-    saveSelectedItems(items);
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-order" id="applyModifiers">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // Add visual indicator to the selected image
-    if (currentTriggerImg) {
-      const wrapper = currentTriggerImg.closest('.carousel-item');
-      if (wrapper && !wrapper.querySelector('.selected-indicator')) {
-        const indicator = document.createElement('div');
-        indicator.className = 'selected-indicator';
-        indicator.innerHTML = '✔';
-        wrapper.appendChild(indicator);
-      }
-    }
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    const modalInstance = bootstrap.Modal.getInstance(itemModalEl);
-    if (modalInstance) modalInstance.hide();
-  });
-
-  // Validate before going to checkout
-document.getElementById('orderBtn').addEventListener('click', function (e) {
-  const items = getSelectedItems();
-  if (!Array.isArray(items) || items.length === 0) {
-    // Show fancy Bootstrap modal instead of alert
-    const noItemsModal = new bootstrap.Modal(document.getElementById('noItemsModal'));
-    noItemsModal.show();
-    return;
-  }
-  // Proceed if items exist
-  window.location.href = 'checkout.html';
-});
-
-
-  // Keep hidden special requests field in sync
-  const specialInput = document.getElementById('specialRequests');
-  const hiddenSpecial = document.getElementById('hiddenSpecialRequests');
-  if (specialInput && hiddenSpecial) {
-    specialInput.addEventListener('input', () => {
-      hiddenSpecial.value = specialInput.value;
-      localStorage.setItem('specialRequests', specialInput.value);
-    });
-  }
-
-  // Optional: simple mic button UX
-  const micButton = document.getElementById('micButton');
-  if (micButton && specialInput) {
-    micButton.addEventListener('click', () => {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        const old = specialInput.placeholder;
-        specialInput.placeholder = 'Speech not available — type instead';
-        setTimeout(() => specialInput.placeholder = old, 1500);
-        return;
-      }
-      const recog = new SpeechRecognition();
-      recog.lang = 'en-US';
-      recog.interimResults = false;
-      recog.maxAlternatives = 1;
-      recog.start();
-      micButton.classList.add('active');
-      recog.onresult = (e) => {
-        const spoken = e.results[0][0].transcript;
-        specialInput.value = specialInput.value ? (specialInput.value + ' ' + spoken) : spoken;
-        hiddenSpecial.value = specialInput.value;
-        localStorage.setItem('specialRequests', specialInput.value);
-      };
-      recog.onend = () => micButton.classList.remove('active');
-      recog.onerror = () => micButton.classList.remove('active');
-    });
-  }
-
-  // Initialize all carousels with proper settings
-  document.querySelectorAll('.carousel').forEach(car => {
-    new bootstrap.Carousel(car, { interval: false, ride: false, wrap: true, touch: true });
-  });
-</script>
+    <!-- JS Functionality -->
+    <script src="../js/menu.js"></script>
 </body>
 </html>
-

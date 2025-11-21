@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Closed | Coffee Portal</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Global and page-specific styles -->
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/closed.css" />
+</head>
+<body>
+
+    <div class="container my-4">
+        <div class="closed-card mx-auto shadow-sm text-center">
+            
+            <!-- Closed Icon -->
+            <div class="closed-icon-wrapper">
+                <i class="bi bi-moon-stars-fill closed-icon"></i>
+            </div>
+
+            <!-- Message -->
+            <h2 class="closed-title">We're Currently Closed</h2>
+            <p class="closed-message">
+                Our kitchen is taking a well-deserved rest. We'll be back tomorrow ready to serve you!
+            </p>
+
+            <!-- Hours Info -->
+            <div class="hours-info">
+                <h5 class="hours-title">Our Hours</h5>
+                <div class="hours-list">
+                    <div class="hours-item">
+                        <span class="hours-label">Breakfast</span>
+                        <span class="hours-time">8:00 AM - 10:30 AM</span>
+                    </div>
+                    <div class="hours-item">
+                        <span class="hours-label">Lunch</span>
+                        <span class="hours-time">10:30 AM - 2:00 PM</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Menu Buttons -->
+            <div class="menu-preview-buttons">
+                <p class="preview-text">Want to browse our menu?</p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <button id="viewBreakfastBtn" class="btn btn-preview">
+                        <i class="bi bi-sunrise me-2"></i>View Breakfast Menu
+                    </button>
+                    <button id="viewLunchBtn" class="btn btn-preview">
+                        <i class="bi bi-sun me-2"></i>View Lunch Menu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Back to Home -->
+            <div class="mt-4">
+                <a href="../index.html" class="btn btn-home">
+                    <i class="bi bi-house-door me-2"></i>Back to Home
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.getElementById('viewBreakfastBtn').addEventListener('click', () => {
+            window.location.href = 'menu.html?view=breakfast';
+        });
+
+        document.getElementById('viewLunchBtn').addEventListener('click', () => {
+            window.location.href = 'menu.html?view=lunch';
+        });
+    </script>
+</body>
+</html>
