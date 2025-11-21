@@ -91,10 +91,10 @@ namespace Controllers
 
         public IActionResult Success()
         {
-            // Square will redirect here after checkout (if configured)
-            // Optionally clear session order on success:
+            // remove order from session
             HttpContext.Session.Remove("CurrentOrder");
-            return View();
+            // redirect to home index
+            return RedirectToAction("Index", "Home");
         }
     }
 }

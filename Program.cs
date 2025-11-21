@@ -2,8 +2,24 @@ using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Restore default logging providers
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+// Add Azure App Service log providers (REQUIRED for Log Stream)
+builder.Logging.AddAzureWebAppDiagnostics();
+
+// Optional filters
+builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+builder.Logging.AddFilter("System", LogLevel.Warning);
+builder.Logging.AddFilter("Controllers.WebhookController", LogLevel.Information);
+
+// -------------------------------------------
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -35,6 +51,9 @@ builder.Services.AddHttpClient("Square", client =>
 });
 
 builder.Services.AddScoped<Services.ISquareCheckoutService, Services.SquareCheckoutService>();
+
+// Register webhook verification service so WebhookController can be constructed
+builder.Services.AddScoped<Services.ISquareWebhookService, Services.SquareWebhookService>();
 
 var app = builder.Build();
 
