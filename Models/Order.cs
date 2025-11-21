@@ -29,5 +29,6 @@ namespace ClipperCoffeeCorner.Models
         // Navigation
         public User? User { get; set; }
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     }
 }

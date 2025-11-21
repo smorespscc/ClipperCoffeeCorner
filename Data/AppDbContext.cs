@@ -21,6 +21,7 @@ namespace ClipperCoffeeCorner.Data
         public DbSet<CombinationOption> CombinationOptions => Set<CombinationOption>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+        public DbSet<Payment> Payments => Set<Payment>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,6 +39,12 @@ namespace ClipperCoffeeCorner.Data
             modelBuilder.Entity<OrderItem>()
                 .Property(oi => oi.LineTotal)
                 .HasComputedColumnSql("[Quantity] * [UnitPrice]", stored: true);
+            
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Order)
+                .WithMany(o => o.Payments)
+                .HasForeignKey(p => p.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
