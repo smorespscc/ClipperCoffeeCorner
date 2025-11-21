@@ -1,33 +1,37 @@
-﻿
-// Temp model just so the project builds. 
-// I think these are the right names for the fields tho
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ClipperCoffeeCorner.Models
 {
+    [Table("User")]
     public class User
     {
-        public Guid UserId { get; set; } = Guid.NewGuid();
+        [Key]
+        public int UserId { get; set; }
 
-        public required string Username { get; set; }
+        [Required, MaxLength(50)]
+        public string UserName { get; set; } = string.Empty;
 
-        public required string UserRole { get; set; }
+        [Required, MaxLength(20)]
+        public string UserRole { get; set; } = "Customer";
 
-        public NotificationPreference NotificationPref { get; set; }  // 0 = none, 1 = email, 2 = SMS, etc.
+        [MaxLength(100)]
+        public string? Email { get; set; }
 
-        public string? NotificationEmail { get; set; }
-
+        [MaxLength(20)]
         public string? PhoneNumber { get; set; }
 
-        public DateTimeOffset? LastLogin { get; set; }
+        [MaxLength(20)]
+        public string NotificationPref { get; set; } = "None";   // "SMS", "Email", "None"
 
-        public DateTimeOffset AccountCreated { get; set; } = DateTimeOffset.UtcNow;
-    }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? LastLoginAt { get; set; }
 
-    [Flags]
-    public enum NotificationPreference : byte
-    {
-        None = 0,
-        Sms = 1,
-        Email = 2,
+        [MaxLength(200)]
+        public string? SquareCustomerId { get; set; }
+
+        // Navigation
+        public ICollection<Password> Passwords { get; set; } = new List<Password>();
     }
 }

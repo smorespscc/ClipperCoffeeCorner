@@ -1,6 +1,7 @@
-﻿using Twilio.Rest.Api.V2010.Account;
+﻿using ClipperCoffeeCorner.Models;
+using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
-using ClipperCoffeeCorner.Models;
+using static ClipperCoffeeCorner.Services.WaitTimeNotificationService;
 
 // SMS notification service using Twilio
 
@@ -18,13 +19,17 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // send order placed SMS notification
-        public async Task SendPlacedAsync(Order order, User user, double estimatedWaitTime)
+        public async Task SendPlacedAsync(Order order, UserResponse user, double estimatedWaitTime)
         {
-            if (user.NotificationPref != NotificationPreference.Sms ||
+            if (user.NotificationPref != "Sms" ||
                 string.IsNullOrWhiteSpace(user.PhoneNumber))
                 return;
 
-            var message = $"Order placed! Est. wait: {estimatedWaitTime} min";
+            var itemsList = string.Join(", ", order.OrderItems.Select(oi => $"{oi.OrderItemId}"));
+
+            var message = $"Order placed!\n" +
+                          $"Items: {itemsList}\n" +
+                          $"Est. wait: {estimatedWaitTime} min";
 
             try
             {
@@ -42,9 +47,9 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // send order completed SMS notification
-        public async Task SendCompletionAsync(Order order, User user)
+        public async Task SendCompletionAsync(OrderDetailsDto order, UserResponse user)
         {
-            if (user.NotificationPref != NotificationPreference.Sms ||
+            if (user.NotificationPref != "Sms" ||
                 string.IsNullOrWhiteSpace(user.PhoneNumber))
                 return;
 

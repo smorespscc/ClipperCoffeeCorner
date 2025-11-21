@@ -22,10 +22,10 @@ namespace ClipperCoffeeCorner.Controllers
         {
             try
             {
-                var estimatedWaitTime = await _service.AddOrderAsync(order);
+                var estimatedWaitTime = await _service.ProcessNewOrder(order);
                 return Ok(new
                 {
-                    Message = "Order placed successfully!",
+                    Message = "Order placed successfully",
                     OrderId = order.OrderId,
                     EstimatedWaitMinutes = estimatedWaitTime,
                 });
@@ -37,15 +37,15 @@ namespace ClipperCoffeeCorner.Controllers
         }
 
         [HttpPost("order-complete")]
-        public async Task<IActionResult> OrderComplete([FromBody] Guid orderId)
+        public async Task<IActionResult> OrderComplete([FromBody] int orderId)
         {
             try
             {
                 var order = await _service.CompleteOrderAsync(orderId);
                 return Ok(new
                 {
-                    Message = "Order completed and customer notified!",
-                    OrderId = order.OrderId,
+                    Message = "Order completed and customer notified",
+                    OrderId = order.OrderId
                 });
             }
             catch (Exception ex)
@@ -54,30 +54,63 @@ namespace ClipperCoffeeCorner.Controllers
             }
         }
 
-        // this depends on DB so will be changed later
         // gets popular items of a given menu category
-        // maybe if no category is given it just gives overall popular items
-        [HttpGet("get-popular-items")]
-        public async Task<IActionResult> GetPopularItems([FromBody] Guid MenuCategory)
+        // if no category is given it just gives overall popular items
+        // does not work yet
+        [HttpGet("popular-items")]
+        public async Task<IActionResult> GetPopularItems([FromQuery] int? categoryId = null)
         {
             try
             {
-                var popularItems = await _service.GetPopularItemsAsync(MenuCategory);
-                return Ok(new
-                {
-                    Message = "Popular items retrieved successfully!",
-                    Items = popularItems.Select(item => new
-                    {
-                        item.MenuItemId, // id of items
-                        item.Name,       // name of items
-                        item.OrderCount  // number of times item was ordered (how popular it is)
-                    })
-                });
+                var items = await _service.GetPopularItemsAsync(categoryId);
+                return Ok(items);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { Error = ex.Message });
             }
+        }
+
+        // =========================
+        // === TESTING ENDPOINTS ===
+        // =========================
+
+
+        // Test Twilio and SendGrid notifications
+        [HttpPost("test-notifications")]
+        public async Task<IActionResult> TestNotifications(string? notificationPref)
+        {
+            var fakeOrder = new Order
+            {
+                OrderId = 1,
+                UserId = 1,
+                IdempotencyKey = Guid.NewGuid(),
+                Status = "Placed",
+                PlacedAt = DateTime.UtcNow,
+                TotalAmount = 9.99m,
+                OrderItems = new List<OrderItem>() 
+                {
+                    new OrderItem
+                    {
+                        OrderItemId = 1,
+                        OrderId = 1,
+                        CombinationId = 1,
+                        Quantity = 1,
+                        UnitPrice = 9.99m,
+                    },
+                }
+            };
+
+            var fakeUser = new UserResponse
+            {
+                NotificationPref = notificationPref ?? "Email",
+                PhoneNumber = "+18777804236", // Twilio Virtual Phone Number
+                Email = "mamarsh7of9@gmail.com" // test email
+            };
+
+            await _service.TestNotificationsAsync(fakeOrder, fakeUser);
+
+            return Ok("Test notification triggered");
         }
     }
 }

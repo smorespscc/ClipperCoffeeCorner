@@ -1,11 +1,12 @@
 ﻿using ClipperCoffeeCorner.Models;
+using static ClipperCoffeeCorner.Services.WaitTimeNotificationService;
 
 namespace ClipperCoffeeCorner.Services
 {
     public interface IWaitTimeEstimator
     {
         double Estimate(Order order);
-        void AddCompletedForTraining(Order order);
+        void AddCompletedForTraining(OrderDetailsDto order);
     }
 
     public class WaitTimeEstimator : IWaitTimeEstimator
@@ -32,7 +33,7 @@ namespace ClipperCoffeeCorner.Services
 
         // Called when an order is completed. Don't know if you need this but might be useful.
         // Isn't expected to return anything.
-        public void AddCompletedForTraining(Order order)
+        public void AddCompletedForTraining(OrderDetailsDto order)
         {
 
 

@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Options;
+﻿using ClipperCoffeeCorner.Models;
+using ClipperCoffeeCorner.Options;
+using Microsoft.Extensions.Options;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using ClipperCoffeeCorner.Models;
-using ClipperCoffeeCorner.Options;
+using static ClipperCoffeeCorner.Services.WaitTimeNotificationService;
 
 // Email notification service using SendGrid
 
@@ -24,15 +25,17 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // Send order placement notification
-        public async Task SendPlacedAsync(Order order, User user, double estimatedWaitTime)
+        public async Task SendPlacedAsync(Order order, UserResponse user, double estimatedWaitTime)
         {
-            if (!user.NotificationPref.HasFlag(NotificationPreference.Email) ||
-                string.IsNullOrWhiteSpace(user.NotificationEmail))
+            if (user.NotificationPref != "Email" ||
+                string.IsNullOrWhiteSpace(user.Email))
                 return;
 
+            var itemsList = string.Join(", ", order.OrderItems.Select(oi => $"{oi.OrderItemId}"));
+
             var subject = "Order Placed!";
-            var plain = $"Items: {order.LineItems}\nPosition in line: idk dawg maybe we can add this\nEst. wait: {estimatedWaitTime} min";
-            var html = $"<p>Items: <strong>{order.LineItems}</strong></p>" +
+            var plain = $"Items: {itemsList}\nPosition in line: idk dawg maybe we can add this\nEst. wait: {estimatedWaitTime} min";
+            var html = $"<p>Items: <strong>{itemsList}</strong></p>" +
                        $"<p>Position: <strong>idk dawg maybe we can add this</strong></p>" +
                        $"<p>Est. wait: <strong>{estimatedWaitTime} min</strong></p>";
 
@@ -43,27 +46,27 @@ namespace ClipperCoffeeCorner.Services
                 PlainTextContent = plain,
                 HtmlContent = html
             };
-            msg.AddTo(user.NotificationEmail);
+            msg.AddTo(user.Email);
 
             try
             {
                 var resp = await _client.SendEmailAsync(msg);
                 if (resp.IsSuccessStatusCode)
-                    _logger.LogInformation($"[EMAIL] Sent to {user.NotificationEmail}");
+                    _logger.LogInformation($"[EMAIL] Sent to {user.Email}");
                 else
                     _logger.LogError($"[EMAIL] Failed: {await resp.Body.ReadAsStringAsync()}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"[EMAIL] Exception to {user.NotificationEmail}");
+                _logger.LogError(ex, $"[EMAIL] Exception to {user.Email}");
             }
         }
 
         // Send order completion notification
-        public async Task SendCompletionAsync(Order order, User user)
+        public async Task SendCompletionAsync(OrderDetailsDto order, UserResponse user)
         {
-            if (!user.NotificationPref.HasFlag(NotificationPreference.Email) ||
-                string.IsNullOrWhiteSpace(user.NotificationEmail))
+            if (user.NotificationPref != "Email" ||
+                string.IsNullOrWhiteSpace(user.Email))
                 return;
 
             var subject = "Order Ready!";
@@ -77,19 +80,19 @@ namespace ClipperCoffeeCorner.Services
                 PlainTextContent = plain,
                 HtmlContent = html
             };
-            msg.AddTo(user.NotificationEmail);
+            msg.AddTo(user.Email);
 
             try
             {
                 var resp = await _client.SendEmailAsync(msg);
                 if (resp.IsSuccessStatusCode)
-                    _logger.LogInformation($"[EMAIL] Sent to {user.NotificationEmail}");
+                    _logger.LogInformation($"[EMAIL] Sent to {user.Email}");
                 else
                     _logger.LogError($"[EMAIL] Failed: {await resp.Body.ReadAsStringAsync()}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"[EMAIL] Exception to {user.NotificationEmail}");
+                _logger.LogError(ex, $"[EMAIL] Exception to {user.Email}");
             }
         }
     }

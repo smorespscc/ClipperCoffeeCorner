@@ -1,4 +1,5 @@
 ﻿using ClipperCoffeeCorner.Models;
+using ClipperCoffeeCorner.Controllers;
 
 
 namespace ClipperCoffeeCorner.Services
@@ -8,205 +9,173 @@ namespace ClipperCoffeeCorner.Services
         private readonly IWaitTimeEstimator _estimator;
         private readonly IEnumerable<INotificationService> _notifier;
         private readonly ILogger<WaitTimeNotificationService> _logger;
-        private readonly IOrderRepository _orders;
+
+        private readonly HttpClient _http;
 
         public WaitTimeNotificationService(
-            IOrderRepository orders,
             IWaitTimeEstimator estimator,
             IEnumerable<INotificationService> notifier,
-            ILogger<WaitTimeNotificationService> logger)
+            ILogger<WaitTimeNotificationService> logger,
+            IHttpClientFactory factory)
         {
-            _orders = orders;
             _estimator = estimator;
             _notifier = notifier;
             _logger = logger;
+            _http = factory.CreateClient();
+            _http.BaseAddress = new Uri("https://localhost:7138"); // insert app URL when deployed
         }
 
-        public async Task<double> AddOrderAsync(Order order)
+        // still have no idea what information this is getting or if we are responsible for adding new orders to the DB
+        // assuming we get an Order object with all necessary info filled out
+        public async Task<double> ProcessNewOrder(Order order)
         {
             ArgumentNullException.ThrowIfNull(order);
-
-            // set order fields
-            order.PlacedAt = DateTimeOffset.Now;
-            order.Status = OrderStatus.Placed;
 
             // ask ML estimation service for wait time (can change this depending on what ML service actually needs)
             double estimatedWaitTime = _estimator.Estimate(order);
 
-            // fill in fields from ML estimation stuff
-
             // add to orders table
-            _orders.Add(order);
-
-            // INSERT: stuff to query users table to get email, phone number, and notification preference
-            // both SMS and Email notifiers will need that info so better to query it here than have them both do it
-            User user = new User
+            // create request according to OrdersController CreateOrderRequest DTO
+            var request = new
             {
-                // temporary hardcoded user info for testing
-                UserId = Guid.NewGuid(),
-                Username = "Test User",
-                UserRole = "Customer",
-                NotificationPref = NotificationPreference.Email,
-                PhoneNumber = "+15551234567",
-                NotificationEmail = "mmarsh7of9@gmail.com"
+                userId = order.UserId.HasValue ? order.UserId : null,
+                items = order.OrderItems.Select(oi => new
+                {
+                    combinationId = oi.CombinationId,
+                    quantity = oi.Quantity
+                }).ToList()
             };
 
-            // send confirmation SMS or Email
-            foreach (var notifier in _notifier)
+            // POST to OrdersController CreateOrder endpoint
+            var response = await _http.PostAsJsonAsync("/api/orders", request);
+
+            if (order.UserId.HasValue)
             {
-                await notifier.SendPlacedAsync(order, user, estimatedWaitTime);
+                // query users table to get email, phone number, and notification preference
+                var userResponse = await _http.GetAsync($"/api/users/{order.UserId}");
+                var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
+
+                // send confirmation SMS or Email
+                foreach (var notifier in _notifier)
+                {
+                    #pragma warning disable CS8604 // Possible null reference argument.
+                    await notifier.SendPlacedAsync(order, user, estimatedWaitTime);
+                    #pragma warning restore CS8604 // Possible null reference argument.
+                }
             }
+
             return estimatedWaitTime;
         }
 
-        public async Task<Order> CompleteOrderAsync(Guid orderId)
+        public async Task<OrderDetailsDto> CompleteOrderAsync(int orderId)
         {
-            // INSERT: retrieve order from sql table
-            // placeholder object for now
-            var order = CreateTestOrder();
-
-            // complete order by updating table
-            _orders.CompleteOrder(orderId);
-
-            // INSERT: stuff to query users table to get email, phone number, and notification preference
-            // both SMS and Email notifiers will need that info so better to query it here than have them both do it
-            User user = new User
+            // create request to update order (don't think we are even doing this part but whatever)
+            var request = new
             {
-                // temporary hardcoded user info for testing
-                UserId = Guid.NewGuid(),
-                Username = "Test User",
-                UserRole = "Customer",
-                NotificationPref = NotificationPreference.Email,
-                PhoneNumber = "+15551234567",
-                NotificationEmail = "mmarsh7of9@gmail.com"
+                status = "Completed"
             };
 
-            // Send ready SMS or Email
-            foreach (var notifier in _notifier)
+            // call api PUT /api/orders/{orderId}/status
+            var response = await _http.PutAsJsonAsync($"/api/orders/{orderId}/status", request);
+
+            // get updated order
+            var orderResponse = await _http.GetAsync($"/api/orders/{orderId}");
+            if (!orderResponse.IsSuccessStatusCode)
             {
-                await notifier.SendCompletionAsync(order, user);
+                var error = await orderResponse.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to get order: {error}");
+            }
+
+            var order = await orderResponse.Content.ReadFromJsonAsync<OrderDetailsDto>();
+
+            if (order is not null && order.UserId.HasValue)
+            {
+                // query users table to get email, phone number, and notification preference
+                var userResponse = await _http.GetAsync($"/api/users/{order.UserId}");
+                userResponse.EnsureSuccessStatusCode();
+                var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>()
+                    ?? throw new InvalidOperationException($"User {order.UserId.Value} not found but was referenced by order {orderId}");
+
+                // send confirmation SMS or Email
+                foreach (var notifier in _notifier)
+                {
+                    await notifier.SendCompletionAsync(order, user);
+                }
             }
 
             // give to ML training service. Might not need this.
-            _estimator.AddCompletedForTraining(order);
+            if (order is not null)
+            {
+                _estimator.AddCompletedForTraining(order);
+                return order;
+            }
 
-            return order;
+            throw new InvalidOperationException($"Order {orderId} not found.");
         }
 
 
-        // subject to changes based on DB team service
-        public async Task<List<PopularItemsModel>> GetPopularItemsAsync(Guid menuCategory)
+        // return type could be changed to whatever is needed
+        // uses 100 most recent orders
+        // doesn't work yet
+        public async Task<List<PopularItemsModel>> GetPopularItemsAsync(int? menuCategory)
         {
-            // INSERT: call to DB to get popular items from orders table
-            // maybe just get a view of last 100 orders or something idk
+            var response = await _http.GetAsync($"/api/orders/recent?n=100");
 
-            await Task.Delay(100); // simulate async DB call
+            if (!response.IsSuccessStatusCode)
+                throw new Exception("Failed to retrieve recent orders.");
 
-            // placeholder hardcoded list for now
-            return new List<PopularItemsModel>
-            {
-                new PopularItemsModel
-                {
-                    MenuItemId = Guid.NewGuid(),
-                    Name = "Cappuccino",
-                    OrderCount = 150
-                },
-                new PopularItemsModel
-                {
-                    MenuItemId = Guid.NewGuid(),
-                    Name = "Espresso",
-                    OrderCount = 120
-                },
-                new PopularItemsModel
-                {
-                    MenuItemId = Guid.NewGuid(),
-                    Name = "Blueberry Muffin",
-                    OrderCount = 90
-                }
-            };
+            var orders = await response.Content.ReadFromJsonAsync<List<OrderDetailsDto>>();
+
+            if (orders == null)
+                throw new Exception("Orders returned null from API.");
+
+            // Process list of orders to determine most ordered items
+
+            // Create a list of item objects. Maybe make a more simple DTO based off of the MenuItem model
+            // Should only need to return a small subset of the MenuItem properties, and maybe only MenuItemId and just let whoever is calling this endpoint handle getting the rest of the info
+
+            // placeholder return value
+            return new List<PopularItemsModel>();
         }
 
-
-        // Create test object
-        // delete later
-        public static Order CreateTestOrder()
+        // DTOs for deserializing order details from Orders API
+        public class OrderDetailsDto
         {
-            return new Order
-            {
-                OrderId = 1001,
-                IdempotencyKey = "idemp-12345-abcde-67890",
-                CustomerId = "cust_789",
-                Currency = "USD",
+            public int OrderId { get; set; }
+            public int? UserId { get; set; }
+            public string? Status { get; set; }
+            public DateTime PlacedAt { get; set; }
+            public DateTime? CompletedAt { get; set; }
+            public decimal TotalAmount { get; set; }
+            public List<OrderItemDetailsDto> Items { get; set; } = new();
+        }
 
-                // Line Items: Two coffee drinks
-                LineItems = new List<LineItem>
+        public class OrderItemDetailsDto
         {
-            new LineItem
+            public int OrderItemId { get; set; }
+            public int CombinationId { get; set; }
+            public string? DrinkName { get; set; }
+            public int Quantity { get; set; }
+            public decimal UnitPrice { get; set; }
+            public decimal LineTotal { get; set; }
+        }
+
+        // =======================
+        // === TESTING METHODS ===
+        // =======================
+        public async Task TestNotificationsAsync(Order order, UserResponse user)
+        {
+            double testWaitTime = 7.5;
+
+            foreach (var notifier in _notifier)
             {
-                CatalogObjectId = "CAT_LATTE_001",
-                Name = "Latte",
-                BasePriceMoney = new Money { Amount = 450, Currency = "USD" }, // $4.50
-                Quantity = "1"
-            },
-            new LineItem
-            {
-                CatalogObjectId = "CAT_CROISSANT_002",
-                Name = "Butter Croissant",
-                BasePriceMoney = new Money { Amount = 375, Currency = "USD" }, // $3.75
-                Quantity = "2"
+                await notifier.SendPlacedAsync(order, user, testWaitTime);
+
+                await notifier.SendCompletionAsync(
+                    new OrderDetailsDto { OrderId = order.OrderId },
+                    user
+                );
             }
-        },
-
-                // Taxes: 8.25% sales tax applied at order level
-                Taxes = new List<TaxLine>
-        {
-            new TaxLine
-            {
-                OrderId = "1001",
-                Type = "ADDITIVE",
-                Name = "CA Sales Tax",
-                Percentage = "8.25",
-                Scope = "ORDER"
-            }
-        },
-
-                // Discounts: None for now (or add one if needed)
-                Discounts = new List<DiscountLine>(),
-
-                // Service Charges: e.g., auto-gratuity or delivery fee
-                ServiceCharges = new List<ServiceCharge>
-        {
-            new ServiceCharge
-            {
-                OrderId = "1001",
-                Name = "Counter Service",
-                Percentage = "0",
-                Taxable = false
-            }
-        },
-
-                // Computed totals (in cents)
-                SubtotalMoney = 450 + (375 * 2),         // $4.50 + $7.50 = $12.00 → 1200 cents
-                TotalTaxMoney = 99,                      // ~8.25% of $12.00 ≈ $0.99
-                TotalDiscountMoney = 0,
-                TotalMoney = 1200 + 99,                  // $12.99
-
-                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-10),
-                PlacedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
-                CompletedAt = null, // not ready yet
-
-                Alterations = new List<OrderAlteration>
-        {
-            new OrderAlteration
-            {
-                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-8),
-                Description = "Order created via mobile app",
-                ChangedBy = "mobile-app-v2"
-            }
-        },
-
-                Status = OrderStatus.Placed
-            };
         }
     }
 }
