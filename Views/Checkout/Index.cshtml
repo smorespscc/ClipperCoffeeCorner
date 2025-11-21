@@ -5,8 +5,7 @@
 
 <h2>Checkout</h2>
 
-<form asp-controller="Checkout" asp-action="CreateLink" method="post">
-    @Html.AntiForgeryToken()
+<form asp-controller="Checkout" asp-action="CreateLink" method="get">
     <p>Product: Coffee Product — $10.00</p>
     <button type="submit" class="btn btn-primary">Pay with Square</button>
 </form>

@@ -26,8 +26,7 @@ namespace Controllers
         }
 
         // POST: /Checkout/CreateLink
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpGet]
         public async Task<IActionResult> CreateLink()
         {
             // For demo: create a $10.00 item (1000 cents) if no order exists in session
