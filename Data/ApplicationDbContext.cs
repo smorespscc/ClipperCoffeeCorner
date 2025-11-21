@@ -27,7 +27,7 @@ namespace ClipperCoffeeCorner.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<User>()
-                .HasKey(u => u.Id);
+                .HasKey(u => u.UserId);
 
             modelBuilder.Entity<Password>()
                 .HasKey(p => p.UserId);
@@ -40,11 +40,11 @@ namespace ClipperCoffeeCorner.Data
 
             modelBuilder.Entity<MenuCategory>()
                 .HasMany(c => c.MenuItems)
-                .WithOne(i => i.Category)
-                .HasForeignKey(i => i.CategoryId);
+                .WithOne(i => i.MenuCategory)
+                .HasForeignKey(i => i.MenuCategoryId);
 
             modelBuilder.Entity<MenuItem>()
-                .HasMany(i => i.OptionGroups)
+                .HasMany(i => i.MenuItemOptionGroups)
                 .WithOne(g => g.MenuItem)
                 .HasForeignKey(g => g.MenuItemId);
 
@@ -54,12 +54,12 @@ namespace ClipperCoffeeCorner.Data
                 .HasForeignKey(v => v.OptionGroupId);
 
             modelBuilder.Entity<Combination>()
-                .HasMany(c => c.Options)
+                .HasMany(c => c.CombinationOptions)
                 .WithOne(o => o.Combination)
                 .HasForeignKey(o => o.CombinationId);
 
             modelBuilder.Entity<Order>()
-                .HasMany(o => o.Items)
+                .HasMany(o => o.OrderItems)
                 .WithOne(i => i.Order)
                 .HasForeignKey(i => i.OrderId);
         }
