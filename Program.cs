@@ -44,6 +44,11 @@ builder.Services.AddSingleton<SendGridClient>(sp =>
 });
 
 
+// Register EF Core DbContext with the connection string from configuration
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

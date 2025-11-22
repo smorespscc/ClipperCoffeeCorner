@@ -23,7 +23,7 @@ namespace ClipperCoffeeCorner.Models
         public string? PhoneNumber { get; set; }
 
         [MaxLength(20)]
-        public string NotificationPref { get; set; } = "None";   // "SMS", "Email", "None"
+        public string? NotificationPref { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastLoginAt { get; set; }

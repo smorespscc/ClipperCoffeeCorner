@@ -88,9 +88,7 @@ namespace ClipperCoffeeCorner.Controllers
                 UserId = user.UserId,
                 UserName = user.UserName,
                 UserRole = user.UserRole,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                NotificationPref = user.NotificationPref
+                Email = user.Email
             };
         }
 

@@ -1,12 +1,11 @@
-﻿using ClipperCoffeeCorner.Data;
-using ClipperCoffeeCorner.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static ClipperCoffeeCorner.Services.WaitTimeNotificationService;
+using ClipperCoffeeCorner.Data;
+using ClipperCoffeeCorner.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClipperCoffeeCorner.Controllers
 {
@@ -112,7 +111,6 @@ namespace ClipperCoffeeCorner.Controllers
             return Ok(new
             {
                 order.OrderId,
-                order.UserId,
                 order.Status,
                 order.PlacedAt,
                 order.CompletedAt,
@@ -166,44 +164,6 @@ namespace ClipperCoffeeCorner.Controllers
 
             await _db.SaveChangesAsync();
             return NoContent();
-        }
-
-        // GET: api/orders/recent?n=50
-        [HttpGet("recent")]
-        public async Task<ActionResult<IEnumerable<OrderDetailsDto>>> GetRecentOrders(
-            [FromQuery] int n = 10)
-        {
-            if (n <= 0 || n > 500)
-                return BadRequest("n must be between 1 and 500.");
-
-            var orders = await _db.Orders
-                .OrderByDescending(o => o.PlacedAt)
-                .Take(n)
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Combination)
-                        .ThenInclude(c => c.MenuItem)
-                .Select(o => new OrderDetailsDto
-                {
-                    OrderId = o.OrderId,
-                    UserId = o.UserId,
-                    Status = o.Status,
-                    PlacedAt = o.PlacedAt,
-                    CompletedAt = o.CompletedAt,
-                    TotalAmount = o.TotalAmount,
-
-                    Items = o.OrderItems.Select(oi => new OrderItemDetailsDto
-                    {
-                        OrderItemId = oi.OrderItemId,
-                        CombinationId = oi.CombinationId,
-                        DrinkName = oi.Combination!.MenuItem!.Name,
-                        Quantity = oi.Quantity,
-                        UnitPrice = oi.UnitPrice,
-                        LineTotal = oi.LineTotal
-                    }).ToList()
-                })
-                .ToListAsync();
-
-            return Ok(orders);
         }
     }
 }
