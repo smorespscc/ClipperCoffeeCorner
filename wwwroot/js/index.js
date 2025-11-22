@@ -19,41 +19,42 @@ isStaffCheckbox.addEventListener('change', () => {
 loginForm.addEventListener('submit', function (e) {
   e.preventDefault();
 
-  const username = document.getElementById('username').value.trim();
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
   const staffCode = staffCodeInput.value.trim();
 
   let isValid = true;
 
-  // Username validation
-  if (!username) {
-    document.getElementById('username').classList.add('is-invalid');
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email) {
+    document.getElementById('email').classList.add('is-invalid');
+    document.getElementById('email').nextElementSibling.textContent = 'Please enter a valid email address.';
+    isValid = false;
+  } else if (!emailRegex.test(email)) {
+    document.getElementById('email').classList.add('is-invalid');
+    document.getElementById('email').nextElementSibling.textContent = 'Please enter a valid email address.';
     isValid = false;
   } else {
-    document.getElementById('username').classList.remove('is-invalid');
+    document.getElementById('email').classList.remove('is-invalid');
   }
 
   // Password validation - check against stored user data
   const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-  let passwordValid = false;
 
   if (!password) {
     document.getElementById('password').classList.add('is-invalid');
     isValid = false;
   } else {
     // Check if user exists and password matches
-    if (userData.username || userData.email) {
-      // Check if username/email matches and password is correct
-      const userMatches = username === userData.username || 
-                         username === userData.email || 
-                         username === userData.phone;
+    if (userData.email) {
+      // Check if email matches and password is correct
+      const emailMatches = email === userData.email;
       
-      if (userMatches && password === userData.password) {
-        passwordValid = true;
+      if (emailMatches && password === userData.password) {
         document.getElementById('password').classList.remove('is-invalid');
       } else if (password === 'password') {
         // Fallback for demo purposes
-        passwordValid = true;
         document.getElementById('password').classList.remove('is-invalid');
       } else {
         document.getElementById('password').classList.add('is-invalid');
@@ -61,7 +62,6 @@ loginForm.addEventListener('submit', function (e) {
       }
     } else if (password === 'password') {
       // Fallback for demo purposes when no user is registered
-      passwordValid = true;
       document.getElementById('password').classList.remove('is-invalid');
     } else {
       document.getElementById('password').classList.add('is-invalid');
@@ -83,6 +83,13 @@ loginForm.addEventListener('submit', function (e) {
   }
 
   if (isValid) {
+    // Check for debug email
+    if (email === 'spscc@edu.com') {
+      localStorage.setItem('debugMode', 'true');
+    } else {
+      localStorage.removeItem('debugMode');
+    }
+
     // Save staff flag and code for later use
     if (isStaffCheckbox.checked) {
       localStorage.setItem('isStaff', 'true');

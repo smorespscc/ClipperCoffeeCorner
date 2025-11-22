@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', populateFromLocalStorage);
 
 // Go back to menu without clearing cart
 document.getElementById('backBtn').addEventListener('click', () => {
-    window.location.href = '/Home/Menu';
+    window.location.href = '/Home/Menu?from=checkout';
 });
 
 // Clear all button

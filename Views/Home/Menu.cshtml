@@ -19,6 +19,19 @@
         <!-- Header -->
         <header class="menu-header text-center py-4">
             <h2 class="mb-3">MENU</h2>
+            
+            <!-- Selection Legend -->
+            <div class="selection-legend mb-3">
+                <div class="legend-item">
+                    <div class="legend-indicator manual-selection"></div>
+                    <span>Manual Selection</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-indicator saved-order"></div>
+                    <span>Applied Saved Order</span>
+                </div>
+            </div>
+            
             <div class="current-serving-container">
                 <div class="serving-status-badge">
                     <i class="bi bi-clock-fill me-2"></i>
@@ -60,7 +73,9 @@
             <div class="row gx-3 gy-3 mb-2">
                 <div class="col-12 col-md-6">
                     <div class="section">
-                        <h5 class="section-title">Recent Orders</h5>
+                        <h5 class="section-title">
+                            <i class="bi bi-clock-history me-2"></i>Recent Orders
+                        </h5>
                         <div id="carouselRecent" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
                             <div class="carousel-inner">
                                 <div class="carousel-item active text-center">
@@ -98,7 +113,10 @@
 
                 <div class="col-12 col-md-6">
                     <div class="section">
-                        <h5 class="section-title">Saved Orders</h5>
+                        <h5 class="section-title">
+                            <i class="bi bi-bookmark-fill me-2"></i>Saved Orders
+                            <small class="ms-2 opacity-75">(Click to apply or customize)</small>
+                        </h5>
                         <div id="carouselSaved" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
                             <div class="carousel-inner">
                                 <div class="carousel-item active text-center">
@@ -139,11 +157,13 @@
             <div class="row gx-3 gy-3 mb-2">
                 <div class="col-12 col-md-6">
                     <div class="section">
-                        <h5 class="section-title">Trending</h5>
+                        <h5 class="section-title">
+                            <i class="bi bi-fire me-2"></i>Trending
+                        </h5>
                         <div id="carouselTrending" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
                             <div class="carousel-inner">
                                 <div class="carousel-item active text-center">
-                                    <img src="https://images.unsplash.com/photo-1570968914863-906c88a5e604?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                    <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
                                          class="d-block mx-auto rounded carousel-img menu-item"
                                          alt="Iced Mocha"
                                          data-bs-toggle="modal"
@@ -177,7 +197,9 @@
 
                 <div class="col-12 col-md-6">
                     <div class="section">
-                        <h5 class="section-title">Specials</h5>
+                        <h5 class="section-title">
+                            <i class="bi bi-star-fill me-2"></i>Specials
+                        </h5>
                         <div id="carouselSpecials" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
                             <div class="carousel-inner">
                                 <div class="carousel-item active text-center">
@@ -218,7 +240,10 @@
             <div class="row gx-3 gy-3 mb-2">
                 <div class="col-12">
                     <div class="section">
-                        <h5 class="section-title">Drink Menu</h5>
+                        <h5 class="section-title">
+                            <i class="bi bi-cup-hot-fill me-2"></i>Drink Menu
+                            <small class="ms-2 opacity-75">(Click to customize and add)</small>
+                        </h5>
                         <div id="carouselDrinks" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
                             <div class="carousel-inner">
                                 <div class="carousel-item active text-center">
@@ -272,7 +297,7 @@
                                     <div class="carousel-caption-text">Macchiato</div>
                                 </div>
                                 <div class="carousel-item text-center">
-                                    <img src="https://images.unsplash.com/photo-1570968914863-906c88a5e604?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                    <img src="https://images.unsplash.com/photo-1461023058943-07fcbe16d735?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
                                          class="d-block mx-auto rounded carousel-img-lg menu-item"
                                          alt="Mocha"
                                          data-bs-toggle="modal"
@@ -319,7 +344,10 @@
             <div class="row gx-3 gy-3 mb-2">
                 <div class="col-12">
                     <div class="section">
-                        <h5 class="section-title">Food Menu</h5>
+                        <h5 class="section-title">
+                            <i class="bi bi-egg-fried me-2"></i>Food Menu
+                            <small class="ms-2 opacity-75">(Click to customize and add)</small>
+                        </h5>
                         <div id="carouselFood" class="carousel slide" data-bs-ride="false" data-bs-touch="true" data-bs-wrap="true">
                             <div class="carousel-inner">
                                 <div class="carousel-item active text-center">
@@ -333,7 +361,7 @@
                                     <div class="carousel-caption-text">Pancake Stack</div>
                                 </div>
                                 <div class="carousel-item text-center">
-                                    <img src="https://images.unsplash.com/photo-1612929633736-8fe44a7ecbe9?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
+                                    <img src="https://images.unsplash.com/photo-1484723091739-30a097e8f929?ixlib=rb-4.1.0&auto=format&fit=crop&q=80&w=1170"
                                          class="d-block mx-auto rounded carousel-img-lg menu-item"
                                          alt="Cheese Omelette"
                                          data-bs-toggle="modal"
@@ -589,7 +617,8 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" id="saveOrderBtn">Save Order</button>
                 <button type="button" class="btn btn-order" id="applyModifiers">Apply</button>
             </div>
         </div>

@@ -12,15 +12,15 @@
 
     <form id="loginForm" novalidate>
         <div class="mb-3">
-            <label for="username" class="form-label">Username / Email / Student ID</label>
-            <input type="text" class="form-control" id="username" name="username" placeholder="Enter username, email, or student ID" required>
-            <div class="invalid-feedback">Please enter your username, email, or student ID.</div>
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+            <div class="invalid-feedback">Please enter a valid email address.</div>
         </div>
 
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
             <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
-            <div class="invalid-feedback">Invalid username or password. Please try again.</div>
+            <div class="invalid-feedback">Invalid email or password. Please try again.</div>
         </div>
 
         <!-- Staff checkbox -->

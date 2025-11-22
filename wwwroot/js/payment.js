@@ -126,6 +126,20 @@ paymentForm.addEventListener('submit', function (e) {
             paidAt: Date.now()
         }));
 
+        // Add to recent orders
+        const recentOrders = JSON.parse(localStorage.getItem('recentOrders') || '[]');
+        const newOrder = {
+            orderNumber,
+            items: paidItems,
+            specialRequests: paidSpecial,
+            timestamp: Date.now()
+        };
+        recentOrders.unshift(newOrder);
+        if (recentOrders.length > 10) {
+            recentOrders.splice(10);
+        }
+        localStorage.setItem('recentOrders', JSON.stringify(recentOrders));
+
         localStorage.removeItem('selectedItems');
         localStorage.removeItem('specialRequests');
 
