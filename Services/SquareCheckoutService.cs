@@ -33,6 +33,8 @@ namespace Services
                 order = new
                 {
                     location_id = _locationId,
+                    // Include the local order id as the order.reference_id so Square can correlate
+                    reference_id = order.OrderId.ToString(),
                     line_items = LineItems,
                     taxes = order.Taxes
                 },
