@@ -49,7 +49,7 @@ namespace ClipperCoffeeCorner.Controllers
             if (!ModelState.IsValid) return View(model);
             var existing = _store.FirstOrDefault(p => p.UserId == model.UserId);
             if (existing == null) return NotFound();
-            existing.HashPassword = model.HashPassword;
+            existing.PasswordHash = model.PasswordHash;
             return RedirectToAction(nameof(Index));
         }
 

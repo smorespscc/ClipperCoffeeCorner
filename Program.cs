@@ -9,8 +9,18 @@ builder.Services.AddControllersWithViews();
 
 // Register EF Core DbContext with the connection string from configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (builder.Environment.IsEnvironment("Testing"))
+    {
+        // No real DB, just in-memory
+        options.UseInMemoryDatabase("ClipperCoffeeCornerTest");
+    }
+    else
+    {
+        options.UseSqlServer(
+            builder.Configuration.GetConnectionString("DefaultConnection"));
+    }
+});
 
 var app = builder.Build();
 
@@ -34,10 +44,8 @@ app.UseRouting();
 
 app.UseAuthorization();
 
-// Map attribute-routed API controllers: /api/...
 app.MapControllers();
 
-// Map standard MVC routes for your HomeController / views
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

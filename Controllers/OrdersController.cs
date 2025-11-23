@@ -93,6 +93,7 @@ namespace ClipperCoffeeCorner.Controllers
                 order.CompletedAt,
                 order.TotalAmount);
 
+            // Return 201 Created so the test expecting CreatedAtActionResult passes
             return CreatedAtAction(nameof(GetById), new { id = order.OrderId }, dto);
         }
 
@@ -122,7 +123,7 @@ namespace ClipperCoffeeCorner.Controllers
                     DrinkName = oi.Combination!.MenuItem!.Name,
                     oi.Quantity,
                     oi.UnitPrice,
-                    oi.LineTotal   // ✅ read-only is fine
+                    LineTotal = oi.Quantity * oi.UnitPrice   // compute instead of relying on private setter
                 })
             });
         }
@@ -164,6 +165,77 @@ namespace ClipperCoffeeCorner.Controllers
 
             await _db.SaveChangesAsync();
             return NoContent();
+        }
+
+        // GET: api/orders/{orderId}/items
+        // Returns item details for a single order (menu item id, name, option names, quantity, unit price, line total)
+        [HttpGet("{orderId:int}/items")]
+        public async Task<ActionResult<IEnumerable<OrderItemDetailsDto>>> GetOrderItems(int orderId)
+        {
+            var items = await _db.OrderItems
+                .Where(oi => oi.OrderId == orderId)
+                .Include(oi => oi.Combination!)
+                    .ThenInclude(c => c.MenuItem!)
+                .Include(oi => oi.Combination!)
+                    .ThenInclude(c => c.CombinationOptions!)
+                        .ThenInclude(co => co.OptionValue!)
+                .Select(oi => new OrderItemDetailsDto
+                {
+                    MenuItemId = oi.Combination!.MenuItemId,
+                    MenuItemName = oi.Combination.MenuItem!.Name,
+                    Options = oi.Combination.CombinationOptions
+                                .Select(co => co.OptionValue!.Name)
+                                .ToList(),
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    LineTotal = oi.Quantity * oi.UnitPrice   // compute locally
+                })
+                .ToListAsync();
+
+            if (items == null || items.Count == 0)
+                return NotFound();
+
+            return Ok(items);
+        }
+
+        // GET: api/orders/popular?n=10
+        // Aggregated across last `n` orders: MenuItemId, Name, CategoryId, total quantity, number of orders containing it
+        [HttpGet("popular")]
+        public async Task<ActionResult<IEnumerable<PopularItemDto>>> GetPopularItems([FromQuery] int n = 10)
+        {
+            if (n <= 0) return BadRequest("n must be greater than zero");
+
+            // Get last n order ids (ordered by OrderId; change to a Date field if available)
+            var recentOrderIds = await _db.Orders
+                .OrderByDescending(o => o.OrderId)
+                .Take(n)
+                .Select(o => o.OrderId)
+                .ToListAsync();
+
+            if (recentOrderIds.Count == 0) return Ok(new List<PopularItemDto>());
+
+            var aggregated = await _db.OrderItems
+                .Where(oi => recentOrderIds.Contains(oi.OrderId))
+                .Include(oi => oi.Combination!)
+                    .ThenInclude(c => c.MenuItem!)
+                .GroupBy(oi => new
+                {
+                    MenuItemId = oi.Combination!.MenuItemId,
+                    MenuItemName = oi.Combination.MenuItem!.Name,
+                    MenuCategoryId = oi.Combination.MenuItem!.MenuCategoryId
+                })
+                .Select(g => new PopularItemDto
+                {
+                    MenuItemId = g.Key.MenuItemId,
+                    MenuItemName = g.Key.MenuItemName,
+                    MenuItemCategoryId = g.Key.MenuCategoryId,
+                    TotalQuantity = g.Sum(x => x.Quantity),
+                    OrderCount = g.Select(x => x.OrderId).Distinct().Count()
+                })
+                .OrderByDescending(p => p.TotalQuantity)
+                .ToListAsync();
+
+            return Ok(aggregated);
         }
     }
 }

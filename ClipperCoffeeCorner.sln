@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipperCoffeeCorner", "Clip
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipperCoffeeCorner.Tests", "..\ClipperCoffeeCorner.Tests\ClipperCoffeeCorner.Tests.csproj", "{BDFF005D-26B1-4DBB-8AE1-D5E38DB8D494}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +19,10 @@ Global
 		{41756080-369D-425F-987E-D45882383AA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41756080-369D-425F-987E-D45882383AA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41756080-369D-425F-987E-D45882383AA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDFF005D-26B1-4DBB-8AE1-D5E38DB8D494}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDFF005D-26B1-4DBB-8AE1-D5E38DB8D494}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDFF005D-26B1-4DBB-8AE1-D5E38DB8D494}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDFF005D-26B1-4DBB-8AE1-D5E38DB8D494}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
