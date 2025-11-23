@@ -116,7 +116,6 @@ namespace ClipperCoffeeCorner.Controllers
                 order.CompletedAt,
                 order.TotalAmount);
 
-            // Return 201 Created so the test expecting CreatedAtActionResult passes
             return CreatedAtAction(nameof(GetById), new { id = order.OrderId }, dto);
         }
 
@@ -163,15 +162,7 @@ namespace ClipperCoffeeCorner.Controllers
                 order.PlacedAt,
                 order.CompletedAt,
                 order.TotalAmount,
-                Items = order.OrderItems.Select(oi => new
-                {
-                    oi.OrderItemId,
-                    oi.CombinationId,
-                    DrinkName = oi.Combination!.MenuItem!.Name,
-                    oi.Quantity,
-                    oi.UnitPrice,
-                    LineTotal = oi.Quantity * oi.UnitPrice   // compute instead of relying on private setter
-                })
+                Items = itemsDto
             });
         }
 
@@ -218,6 +209,118 @@ namespace ClipperCoffeeCorner.Controllers
 
             await _db.SaveChangesAsync();
             return NoContent();
+        }
+
+        // ============================================================
+        // 5. NOTIFICATION ENDPOINT #1
+        //    Items in a specific order (with option names)
+        //    GET: api/orders/{orderId}/items-detail
+        // ============================================================
+        [HttpGet("{orderId:int}/items-detail")]
+        public async Task<ActionResult<IEnumerable<OrderItemNotificationDto>>> GetOrderItemsDetail(
+            int orderId)
+        {
+            var orderItems = await _db.OrderItems
+                .Where(oi => oi.OrderId == orderId)
+                .Include(oi => oi.Combination)
+                    .ThenInclude(c => c.MenuItem)
+                .Include(oi => oi.Combination)
+                    .ThenInclude(c => c.CombinationOptions)
+                        .ThenInclude(co => co.OptionValue)
+                .ToListAsync();
+
+            if (!orderItems.Any())
+            {
+                return NotFound(new { message = $"No items found for order {orderId}." });
+            }
+
+            var list = orderItems
+                .Where(oi => oi.Combination != null && oi.Combination.MenuItem != null)
+                .Select(oi =>
+                {
+                    var combo = oi.Combination!;
+                    var menuItem = combo.MenuItem!;
+
+                    var optionNames = combo.CombinationOptions?
+                        .Where(co => co.OptionValue != null)
+                        .Select(co => co.OptionValue!.Name)
+                        .ToList()
+                        ?? new List<string>();
+
+                    var lineTotal = oi.LineTotal != 0m
+                        ? oi.LineTotal
+                        : oi.UnitPrice * oi.Quantity;
+
+                    return new OrderItemNotificationDto(
+                        MenuItemId: combo.MenuItemId,
+                        MenuItemName: menuItem.Name,
+                        OptionNames: optionNames,
+                        Quantity: oi.Quantity,
+                        UnitPrice: oi.UnitPrice,
+                        LineTotal: lineTotal);
+                })
+                .ToList();
+
+            return Ok(list);
+        }
+
+        // ============================================================
+        // 6. NOTIFICATION ENDPOINT #2
+        //    Popular items in last n orders (aggregated)
+        //    GET: api/orders/popular-items?n=10
+        // ============================================================
+        [HttpGet("popular-items")]
+        public async Task<ActionResult<IEnumerable<PopularMenuItemDto>>> GetPopularMenuItems(
+            [FromQuery] int n = 10)
+        {
+            if (n <= 0) n = 10;
+
+            // 1) Get the IDs of the last n orders
+            var lastOrderIds = await _db.Orders
+                .OrderByDescending(o => o.PlacedAt)
+                .Take(n)
+                .Select(o => o.OrderId)
+                .ToListAsync();
+
+            if (lastOrderIds.Count == 0)
+            {
+                return Ok(Array.Empty<PopularMenuItemDto>());
+            }
+
+            // 2) Load items from those orders, with their MenuItem info
+            var items = await _db.OrderItems
+                .Where(oi => lastOrderIds.Contains(oi.OrderId))
+                .Include(oi => oi.Combination)
+                    .ThenInclude(c => c.MenuItem)
+                .Where(oi => oi.Combination != null && oi.Combination.MenuItem != null)
+                .Select(oi => new
+                {
+                    oi.OrderId,
+                    oi.Quantity,
+                    MenuItemId = oi.Combination!.MenuItemId,
+                    MenuItemCategoryId = oi.Combination!.MenuItem!.MenuCategoryId,
+                    MenuItemName = oi.Combination!.MenuItem!.Name
+                })
+                .ToListAsync();
+
+            if (items.Count == 0)
+            {
+                return Ok(Array.Empty<PopularMenuItemDto>());
+            }
+
+            // 3) Group in memory and aggregate
+            var result = items
+                .GroupBy(x => new { x.MenuItemId, x.MenuItemCategoryId, x.MenuItemName })
+                .Select(g => new PopularMenuItemDto(
+                    MenuItemId: g.Key.MenuItemId,
+                    MenuItemCategoryId: g.Key.MenuItemCategoryId,
+                    MenuItemName: g.Key.MenuItemName,
+                    TotalQuantity: g.Sum(x => x.Quantity),
+                    OrdersCount: g.Select(x => x.OrderId).Distinct().Count()))
+                .OrderByDescending(x => x.TotalQuantity)
+                .ToList();
+
+            return Ok(result);
         }
     }
 }

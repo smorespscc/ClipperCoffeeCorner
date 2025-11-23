@@ -12,18 +12,8 @@ builder.Services.AddControllersWithViews();
 
 // EF Core DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    if (builder.Environment.IsEnvironment("Testing"))
-    {
-        // No real DB, just in-memory
-        options.UseInMemoryDatabase("ClipperCoffeeCornerTest");
-    }
-    else
-    {
-        options.UseSqlServer(
-            builder.Configuration.GetConnectionString("DefaultConnection"));
-    }
-});
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // --- Square payment integration ---
 
@@ -82,11 +72,13 @@ app.UseSession();
 
 app.UseAuthorization();
 
+// Attribute-routed API controllers: /api/...
 app.MapControllers();
 
-// Map standard MVC routes for your HomeController / views
+// MVC default route
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
