@@ -7,14 +7,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -----------------------------------------
 // MVC controllers + views
-// -----------------------------------------
 builder.Services.AddControllersWithViews();
 
-// -----------------------------------------
 // EF Core DbContext
-// -----------------------------------------
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     if (builder.Environment.IsEnvironment("Testing"))
@@ -29,31 +25,31 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
-// -----------------------------------------
-// Square payment integration
-// -----------------------------------------
+// --- Square payment integration ---
 
-// Prefer BaseUrl from configuration (appsettings.Development.json),
-// fallback to the standard sandbox URL if not set.
-var squareBaseUrl = builder.Configuration["Square:BaseUrl"];
-if (string.IsNullOrWhiteSpace(squareBaseUrl))
-{
-    squareBaseUrl = "https://connect.squareupsandbox.com";
-}
+// Base URL for Square – read from config, fall back to sandbox host
+var squareBaseUrl = builder.Configuration["Square:BaseUrl"]
+                    ?? "https://connect.squareupsandbox.com";
 
+// HttpClient for Square API
 builder.Services.AddHttpClient("Square", client =>
 {
     client.BaseAddress = new Uri(squareBaseUrl);
     client.DefaultRequestHeaders.Accept.Add(
         new MediaTypeWithQualityHeaderValue("application/json"));
+
+    // Optional default Square-Version header
+    var apiVersion = builder.Configuration["Square:ApiVersion"];
+    if (!string.IsNullOrWhiteSpace(apiVersion))
+    {
+        client.DefaultRequestHeaders.Add("Square-Version", apiVersion);
+    }
 });
 
 // Our checkout service that uses the Square HttpClient
 builder.Services.AddScoped<ISquareCheckoutService, SquareCheckoutService>();
 
-// -----------------------------------------
-// Session (optional, but safe to keep)
-// -----------------------------------------
+// --- Session (optional, but safe to keep) ---
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -64,9 +60,7 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
-// -----------------------------------------
-// HTTP request pipeline
-// -----------------------------------------
+// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

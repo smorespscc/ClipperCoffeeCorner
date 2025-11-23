@@ -10,22 +10,19 @@ using Microsoft.Extensions.Configuration;
 
 namespace ClipperCoffeeCorner.Services
 {
-    // Simple DTOs used when talking to Square
+    // Simple DTOs we use to build the Square request
     public class SquareLineItem
     {
         public string Name { get; set; } = string.Empty;
-        // Square expects quantity as a string (e.g. "1", "2")
         public string Quantity { get; set; } = "1";
-        // Money in **cents**
-        public long BasePriceAmount { get; set; }
+        public long BasePriceAmount { get; set; }            // in cents
         public string BasePriceCurrency { get; set; } = "USD";
     }
 
     public class SquareTax
     {
         public string Name { get; set; } = string.Empty;
-        // Percentage as a string, e.g. "10" = 10%
-        public string Percentage { get; set; } = "10";
+        public string Percentage { get; set; } = "10";       // "10" = 10%
     }
 
     public class SquareOrder
@@ -118,13 +115,10 @@ namespace ClipperCoffeeCorner.Services
 
             using var doc = JsonDocument.Parse(content);
             if (doc.RootElement.TryGetProperty("payment_link", out var link) &&
-                link.TryGetProperty("url", out var urlElement))
+                link.TryGetProperty("url", out var url))
             {
-                var url = urlElement.GetString();
-                if (!string.IsNullOrEmpty(url))
-                {
-                    return url;
-                }
+                return url.GetString()
+                       ?? throw new InvalidOperationException("Square payment_link.url was null");
             }
 
             throw new InvalidOperationException("Square response did not contain payment_link.url");
