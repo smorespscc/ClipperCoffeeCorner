@@ -20,7 +20,10 @@ namespace ClipperCoffeeCorner.Controllers
             _db = db;
         }
 
+        // =========================
         // DTOs
+        // =========================
+
         public record OrderItemDto(int CombinationId, int Quantity);
 
         public record CreateOrderRequest(
@@ -36,7 +39,27 @@ namespace ClipperCoffeeCorner.Controllers
 
         public record UpdateStatusRequest(string Status);
 
+        // For "items in one order" (notification details)
+        public record OrderItemNotificationDto(
+            int MenuItemId,
+            string MenuItemName,
+            List<string> OptionNames,
+            int Quantity,
+            decimal UnitPrice,
+            decimal LineTotal);
+
+        // For "popular items in last n orders"
+        public record PopularMenuItemDto(
+            int MenuItemId,
+            int MenuItemCategoryId,
+            string MenuItemName,
+            int TotalQuantity,
+            int OrdersCount);
+
+        // =========================
+        // 1. Create Order
         // POST: api/orders
+        // =========================
         [HttpPost]
         public async Task<ActionResult<OrderSummaryDto>> CreateOrder(
             [FromBody] CreateOrderRequest req)
@@ -69,7 +92,7 @@ namespace ClipperCoffeeCorner.Controllers
                     CombinationId = line.CombinationId,
                     Quantity = line.Quantity,
                     UnitPrice = unitPrice
-                    // LineTotal is computed in SQL, not set here
+                    // LineTotal is computed in SQL
                 });
             }
 
@@ -97,7 +120,10 @@ namespace ClipperCoffeeCorner.Controllers
             return CreatedAtAction(nameof(GetById), new { id = order.OrderId }, dto);
         }
 
+        // =========================
+        // 2. Get single order (full)
         // GET: api/orders/5
+        // =========================
         [HttpGet("{id:int}")]
         public async Task<ActionResult<object>> GetById(int id)
         {
@@ -108,6 +134,27 @@ namespace ClipperCoffeeCorner.Controllers
                 .SingleOrDefaultAsync(o => o.OrderId == id);
 
             if (order == null) return NotFound();
+
+            var itemsDto = order.OrderItems.Select(oi =>
+            {
+                var combo = oi.Combination;
+                var menuItem = combo?.MenuItem;
+
+                var drinkName = menuItem?.Name ?? "Unknown";
+                var lineTotal = oi.LineTotal != 0m
+                    ? oi.LineTotal
+                    : oi.UnitPrice * oi.Quantity;
+
+                return new
+                {
+                    oi.OrderItemId,
+                    oi.CombinationId,
+                    DrinkName = drinkName,
+                    oi.Quantity,
+                    oi.UnitPrice,
+                    LineTotal = lineTotal
+                };
+            });
 
             return Ok(new
             {
@@ -128,7 +175,10 @@ namespace ClipperCoffeeCorner.Controllers
             });
         }
 
+        // =========================
+        // 3. Get many orders (summary)
         // GET: api/orders?userId=3
+        // =========================
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OrderSummaryDto>>> GetAll(
             [FromQuery] int? userId = null)
@@ -151,7 +201,10 @@ namespace ClipperCoffeeCorner.Controllers
             return Ok(list);
         }
 
+        // =========================
+        // 4. Update order status
         // PUT: api/orders/5/status
+        // =========================
         [HttpPut("{id:int}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusRequest req)
         {
@@ -165,77 +218,6 @@ namespace ClipperCoffeeCorner.Controllers
 
             await _db.SaveChangesAsync();
             return NoContent();
-        }
-
-        // GET: api/orders/{orderId}/items
-        // Returns item details for a single order (menu item id, name, option names, quantity, unit price, line total)
-        [HttpGet("{orderId:int}/items")]
-        public async Task<ActionResult<IEnumerable<OrderItemDetailsDto>>> GetOrderItems(int orderId)
-        {
-            var items = await _db.OrderItems
-                .Where(oi => oi.OrderId == orderId)
-                .Include(oi => oi.Combination!)
-                    .ThenInclude(c => c.MenuItem!)
-                .Include(oi => oi.Combination!)
-                    .ThenInclude(c => c.CombinationOptions!)
-                        .ThenInclude(co => co.OptionValue!)
-                .Select(oi => new OrderItemDetailsDto
-                {
-                    MenuItemId = oi.Combination!.MenuItemId,
-                    MenuItemName = oi.Combination.MenuItem!.Name,
-                    Options = oi.Combination.CombinationOptions
-                                .Select(co => co.OptionValue!.Name)
-                                .ToList(),
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice,
-                    LineTotal = oi.Quantity * oi.UnitPrice   // compute locally
-                })
-                .ToListAsync();
-
-            if (items == null || items.Count == 0)
-                return NotFound();
-
-            return Ok(items);
-        }
-
-        // GET: api/orders/popular?n=10
-        // Aggregated across last `n` orders: MenuItemId, Name, CategoryId, total quantity, number of orders containing it
-        [HttpGet("popular")]
-        public async Task<ActionResult<IEnumerable<PopularItemDto>>> GetPopularItems([FromQuery] int n = 10)
-        {
-            if (n <= 0) return BadRequest("n must be greater than zero");
-
-            // Get last n order ids (ordered by OrderId; change to a Date field if available)
-            var recentOrderIds = await _db.Orders
-                .OrderByDescending(o => o.OrderId)
-                .Take(n)
-                .Select(o => o.OrderId)
-                .ToListAsync();
-
-            if (recentOrderIds.Count == 0) return Ok(new List<PopularItemDto>());
-
-            var aggregated = await _db.OrderItems
-                .Where(oi => recentOrderIds.Contains(oi.OrderId))
-                .Include(oi => oi.Combination!)
-                    .ThenInclude(c => c.MenuItem!)
-                .GroupBy(oi => new
-                {
-                    MenuItemId = oi.Combination!.MenuItemId,
-                    MenuItemName = oi.Combination.MenuItem!.Name,
-                    MenuCategoryId = oi.Combination.MenuItem!.MenuCategoryId
-                })
-                .Select(g => new PopularItemDto
-                {
-                    MenuItemId = g.Key.MenuItemId,
-                    MenuItemName = g.Key.MenuItemName,
-                    MenuItemCategoryId = g.Key.MenuCategoryId,
-                    TotalQuantity = g.Sum(x => x.Quantity),
-                    OrderCount = g.Select(x => x.OrderId).Distinct().Count()
-                })
-                .OrderByDescending(p => p.TotalQuantity)
-                .ToListAsync();
-
-            return Ok(aggregated);
         }
     }
 }
