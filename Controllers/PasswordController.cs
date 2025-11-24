@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using ClipperCoffeeCorner.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,8 @@ namespace ClipperCoffeeCorner.Controllers
 {
     public class PasswordController : Controller
     {
-        // Simple in-memory store for demonstration. Replace with a DB in production.
+        // Simple in-memory store for demonstration. 
+        // In production you would inject AppDbContext instead.
         private static readonly List<Password> _store = new();
 
         public IActionResult Index() => View(_store);
@@ -26,11 +27,14 @@ namespace ClipperCoffeeCorner.Controllers
         public IActionResult Create(Password model)
         {
             if (!ModelState.IsValid) return View(model);
+
             if (_store.Any(p => p.UserId == model.UserId))
             {
-                ModelState.AddModelError(nameof(model.UserId), "A password entry for this user already exists.");
+                ModelState.AddModelError(nameof(model.UserId),
+                    "A password entry for this user already exists.");
                 return View(model);
             }
+
             _store.Add(model);
             return RedirectToAction(nameof(Index));
         }
@@ -47,9 +51,10 @@ namespace ClipperCoffeeCorner.Controllers
         public IActionResult Edit(Password model)
         {
             if (!ModelState.IsValid) return View(model);
+
             var existing = _store.FirstOrDefault(p => p.UserId == model.UserId);
             if (existing == null) return NotFound();
-            existing.HashPassword = model.HashPassword;
+            existing.PasswordHash = model.PasswordHash;
             return RedirectToAction(nameof(Index));
         }
 

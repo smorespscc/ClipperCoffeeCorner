@@ -11,6 +11,7 @@ namespace ClipperCoffeeCorner.Models
         public int PaymentId { get; set; }
 
         [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "OrderId must be a positive non-zero value.")]
         public int OrderId { get; set; }
 
         [Required, MaxLength(50)]
