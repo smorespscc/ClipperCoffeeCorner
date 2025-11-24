@@ -1,21 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Services;
 using System.Threading.Tasks;
 using ClipperCoffeeCorner.Models;
 using ClipperCoffeeCorner.Extensions;
+using ClipperCoffeeCorner.Data;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
+using System.Linq;
 
 namespace Controllers
 {
     public class CheckoutController : Controller
     {
         private readonly ISquareCheckoutService _squareService;
+        private readonly AppDbContext _dbContext;
 
-        public CheckoutController(ISquareCheckoutService squareService)
+        public CheckoutController(ISquareCheckoutService squareService, AppDbContext dbContext)
         {
             _squareService = squareService;
+            _dbContext = dbContext;
         }
 
         // GET: /Checkout
@@ -36,46 +39,34 @@ namespace Controllers
             var order = HttpContext.Session.GetObject<Order>("CurrentOrder");
             if (order == null)
             {
-                // minimal order skeleton — fill as appropriate for your Square integration
-                order = new Order
+                // Compose order object from the database where OrderId == 1 for demo purposes
+                order = await _dbContext.Set<Order>()
+                                        .Include(o => o.OrderItems)
+                                        .Include(o => o.User)
+                                        .FirstOrDefaultAsync(o => o.OrderId == 1);
+                if (order == null)
                 {
-                    IdempotencyKey = Guid.NewGuid().ToString("N"),
-                    CreatedAt = DateTimeOffset.UtcNow,
-                    LineItems = new List<LineItem>
-                    {
-                        new LineItem
-                        {
-                            Name = "Coffee",
-                            BasePriceMoney = new Money
-                            {
-                                Amount = 450,
-                                Currency = "USD"
-                            },
-                            Quantity = "2"
-                        },
-                        new LineItem
-                        {
-                            Name = "Buttered Croissant",
-                            BasePriceMoney = new Money
-                            {
-                                Amount = 600,
-                                Currency = "USD"
-                            },
-                            Quantity = "1"
-                        }
-                    },
-                    Taxes = new List<TaxLine>
-                    {
-                        new TaxLine
-                        {
-                            Name = "Sales Tax",
-                            Percentage = "10.1",
-                            Scope = "ORDER"
-                        },
-                    },
-                    TotalMoney = 1600,
-                    Status = OrderStatus.Draft
-                };
+                    return BadRequest("No order found in database with id = 1.");
+                }
+
+                // Ensure required fields have sensible defaults for the checkout flow
+                if (order.IdempotencyKey == Guid.Empty)
+                {
+                    order.IdempotencyKey = Guid.NewGuid();
+                }
+
+                if (string.IsNullOrWhiteSpace(order.Status))
+                {
+                    order.Status = "Pending";
+                }
+
+                if (order.PlacedAt == default)
+                {
+                    order.PlacedAt = DateTime.UtcNow;
+                }
+
+                // Ensure OrderItems collection is not null (for services that iterate)
+                order.OrderItems ??= Enumerable.Empty<OrderItem>().ToList();
             }
 
             // Persist updated order back into session so later steps can access it

@@ -1,15 +1,21 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ClipperCoffeeCorner.Extensions
 {
     public static class SessionExtensions
     {
-        // Store an object as JSON in session
+        // Store an object as JSON in session (ignores reference cycles)
         public static void SetObject<T>(this ISession session, string key, T value)
         {
             if (session == null) return;
-            var json = JsonSerializer.Serialize(value);
+            var options = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+            var json = JsonSerializer.Serialize(value, options);
             session.SetString(key, json);
         }
 
@@ -21,7 +27,12 @@ namespace ClipperCoffeeCorner.Extensions
             if (string.IsNullOrEmpty(json)) return default;
             try
             {
-                return JsonSerializer.Deserialize<T>(json);
+                var options = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+                return JsonSerializer.Deserialize<T>(json, options);
             }
             catch
             {
