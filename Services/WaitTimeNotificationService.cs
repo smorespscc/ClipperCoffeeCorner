@@ -1,5 +1,6 @@
 ﻿using ClipperCoffeeCorner.Models;
-using ClipperCoffeeCorner.Controllers;
+using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Json;
 
 
 namespace ClipperCoffeeCorner.Services
@@ -9,7 +10,6 @@ namespace ClipperCoffeeCorner.Services
         private readonly IWaitTimeEstimator _estimator;
         private readonly IEnumerable<INotificationService> _notifier;
         private readonly ILogger<WaitTimeNotificationService> _logger;
-
         private readonly HttpClient _http;
 
         public WaitTimeNotificationService(
@@ -25,41 +25,49 @@ namespace ClipperCoffeeCorner.Services
             _http.BaseAddress = new Uri("https://localhost:7138"); // insert app URL when deployed
         }
 
-        // still have no idea what information this is getting or if we are responsible for adding new orders to the DB
-        // assuming we get an Order object with all necessary info filled out
+        // =========================
+        // === Process New Order ===
+        // =========================
+        // 1. get estimated wait time
+        // 2. send notification
+        // 3. return estimated wait time if UI wants to display it in the app or something
         public async Task<double> ProcessNewOrder(Order order)
         {
             ArgumentNullException.ThrowIfNull(order);
 
-            // ask ML estimation service for wait time (can change this depending on what ML service actually needs)
-            double estimatedWaitTime = _estimator.Estimate(order);
+            // get order item details from Orders API
+            var itemsResponse = await _http.GetAsync($"/api/orders/{order.OrderId}/items-detail");
 
-            // add to orders table
-            // create request according to OrdersController CreateOrderRequest DTO
-            var request = new
+            if (!itemsResponse.IsSuccessStatusCode)
             {
-                userId = order.UserId.HasValue ? order.UserId : null,
-                items = order.OrderItems.Select(oi => new
-                {
-                    combinationId = oi.CombinationId,
-                    quantity = oi.Quantity
-                }).ToList()
-            };
+                var error = await itemsResponse.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to fetch order items: {error}");
+            }
 
-            // POST to OrdersController CreateOrder endpoint
-            var response = await _http.PostAsJsonAsync("/api/orders", request);
+            var detailedItems =
+                await itemsResponse.Content.ReadFromJsonAsync<List<OrderItemDetailsDto>>()
+                ?? new List<OrderItemDetailsDto>();
 
+            // get estimated wait time
+            double estimatedWaitTime = _estimator.Estimate(order, detailedItems);
+
+            // I think the order is getting added to the DB before this gets called,
+            // but if not, then need to add a call to CreateOrder in OrdersController here
+
+            // only send notification if order is made by a registered user
+            // to make it work for guest orders, probably add email/phone number to the Order model
             if (order.UserId.HasValue)
             {
                 // query users table to get email, phone number, and notification preference
                 var userResponse = await _http.GetAsync($"/api/users/{order.UserId}");
+                userResponse.EnsureSuccessStatusCode();
                 var user = await userResponse.Content.ReadFromJsonAsync<UserResponse>();
 
                 // send confirmation SMS or Email
                 foreach (var notifier in _notifier)
                 {
                     #pragma warning disable CS8604 // Possible null reference argument.
-                    await notifier.SendPlacedAsync(order, user, estimatedWaitTime);
+                    await notifier.SendPlacedAsync(order, user, estimatedWaitTime, detailedItems);
                     #pragma warning restore CS8604 // Possible null reference argument.
                 }
             }
@@ -67,26 +75,29 @@ namespace ClipperCoffeeCorner.Services
             return estimatedWaitTime;
         }
 
-        public async Task<OrderDetailsDto> CompleteOrderAsync(int orderId)
+        // ===============================
+        // === Complete Existing Order ===
+        // ===============================
+        // 1. send completion notification to customer
+        // 2. give order to ML training service (might not be necessary)
+        public async Task CompleteOrderAsync(int orderId)
         {
-            // create request to update order (don't think we are even doing this part but whatever)
-            var request = new
-            {
-                status = "Completed"
-            };
-
-            // call api PUT /api/orders/{orderId}/status
-            var response = await _http.PutAsJsonAsync($"/api/orders/{orderId}/status", request);
-
-            // get updated order
+            // get order
             var orderResponse = await _http.GetAsync($"/api/orders/{orderId}");
-            if (!orderResponse.IsSuccessStatusCode)
-            {
-                var error = await orderResponse.Content.ReadAsStringAsync();
-                throw new Exception($"Failed to get order: {error}");
-            }
-
+            orderResponse.EnsureSuccessStatusCode();
             var order = await orderResponse.Content.ReadFromJsonAsync<OrderDetailsDto>();
+
+            // get order details
+            var itemsResponse = await _http.GetAsync($"/api/orders/{orderId}/items-detail");
+
+            if (!itemsResponse.IsSuccessStatusCode)
+            {
+                var error = await itemsResponse.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to fetch order items: {error}");
+            }
+            var detailedItems =
+                await itemsResponse.Content.ReadFromJsonAsync<List<OrderItemDetailsDto>>()
+                ?? new List<OrderItemDetailsDto>();
 
             if (order is not null && order.UserId.HasValue)
             {
@@ -99,43 +110,52 @@ namespace ClipperCoffeeCorner.Services
                 // send confirmation SMS or Email
                 foreach (var notifier in _notifier)
                 {
-                    await notifier.SendCompletionAsync(order, user);
+                    await notifier.SendCompletionAsync(order, user, detailedItems);
                 }
             }
 
             // give to ML training service. Might not need this.
             if (order is not null)
             {
-                _estimator.AddCompletedForTraining(order);
-                return order;
+                _estimator.AddCompletedForTraining(order, detailedItems);
             }
-
-            throw new InvalidOperationException($"Order {orderId} not found.");
         }
 
 
-        // return type could be changed to whatever is needed
-        // uses 100 most recent orders
-        // doesn't work yet
-        public async Task<List<PopularItemsModel>> GetPopularItemsAsync(int? menuCategory)
+        // =========================
+        // === Get Popular Items ===
+        // =========================
+        // 1. call Orders API to get popular items
+        // 2. sort by MenuCategory if provided
+        // 3. return most popular n items (or top 10 by default)
+        public async Task<List<PopularItemDto>> GetPopularItemsAsync(int? menuCategoryId)
         {
-            var response = await _http.GetAsync($"/api/orders/recent?n=100");
+            var response =
+                await _http.GetAsync($"/api/orders/popular-items?n={50}");
 
             if (!response.IsSuccessStatusCode)
-                throw new Exception("Failed to retrieve recent orders.");
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to fetch popular items: {error}");
+            }
 
-            var orders = await response.Content.ReadFromJsonAsync<List<OrderDetailsDto>>();
+            var items =
+                await response.Content.ReadFromJsonAsync<List<PopularItemDto>>();
 
-            if (orders == null)
-                throw new Exception("Orders returned null from API.");
+            // Filter by category if requested
+            if (menuCategoryId.HasValue)
+            {
+                items = items
+                    .Where(i => i.MenuItemCategoryId == menuCategoryId.Value)
+                    .ToList();
+            }
 
-            // Process list of orders to determine most ordered items
+            // Order by popularity again just to be safe
+            items = items
+                .OrderByDescending(i => i.TotalQuantity)
+                .ToList();
 
-            // Create a list of item objects. Maybe make a more simple DTO based off of the MenuItem model
-            // Should only need to return a small subset of the MenuItem properties, and maybe only MenuItemId and just let whoever is calling this endpoint handle getting the rest of the info
-
-            // placeholder return value
-            return new List<PopularItemsModel>();
+            return items;
         }
 
         // DTOs for deserializing order details from Orders API
@@ -150,31 +170,45 @@ namespace ClipperCoffeeCorner.Services
             public List<OrderItemDetailsDto> Items { get; set; } = new();
         }
 
-        public class OrderItemDetailsDto
+        public class OrderSummaryDto
         {
-            public int OrderItemId { get; set; }
-            public int CombinationId { get; set; }
-            public string? DrinkName { get; set; }
-            public int Quantity { get; set; }
-            public decimal UnitPrice { get; set; }
-            public decimal LineTotal { get; set; }
+            public int OrderId { get; set; }
+            public int? UserId { get; set; }
+            public string Status { get; set; } = null!;
+            public DateTime PlacedAt { get; set; }
+            public DateTime? CompletedAt { get; set; }
+            public decimal TotalAmount { get; set; }
         }
 
         // =======================
         // === TESTING METHODS ===
         // =======================
-        public async Task TestNotificationsAsync(Order order, UserResponse user)
+        public async Task TestNotificationsAsync(Order order, UserResponse user, List<OrderItemDetailsDto> items)
         {
             double testWaitTime = 7.5;
 
             foreach (var notifier in _notifier)
             {
-                await notifier.SendPlacedAsync(order, user, testWaitTime);
+                await notifier.SendPlacedAsync(
+                    order,
+                    user,
+                    testWaitTime,
+                    items);
+
+                var fakeCompletedOrder = new OrderDetailsDto
+                {
+                    OrderId = order.OrderId,
+                    UserId = order.UserId,
+                    Status = "Completed",
+                    PlacedAt = DateTime.UtcNow,
+                    CompletedAt = DateTime.UtcNow,
+                    TotalAmount = order.TotalAmount
+                };
 
                 await notifier.SendCompletionAsync(
-                    new OrderDetailsDto { OrderId = order.OrderId },
-                    user
-                );
+                    fakeCompletedOrder,
+                    user,
+                    items);
             }
         }
     }

@@ -2,10 +2,11 @@ using ClipperCoffeeCorner.Data;
 using ClipperCoffeeCorner.Options;
 using ClipperCoffeeCorner.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore.SqlServer;
+using Microsoft.Extensions.Options;
 using SendGrid;
 using System.Collections.Generic;
+using System.Net.Http.Headers;
 using Twilio;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -43,6 +44,38 @@ builder.Services.AddSingleton<SendGridClient>(sp =>
     return new SendGridClient(sendGridOptions.ApiKey);
 });
 
+// --- Square payment integration ---
+
+// Base URL for Square – read from config, fall back to sandbox host
+var squareBaseUrl = builder.Configuration["Square:BaseUrl"]
+                    ?? "https://connect.squareupsandbox.com/";
+
+// HttpClient for Square API
+builder.Services.AddHttpClient("Square", client =>
+{
+    client.BaseAddress = new Uri(squareBaseUrl);
+    client.DefaultRequestHeaders.Accept.Add(
+        new MediaTypeWithQualityHeaderValue("application/json"));
+
+    // Optional default Square-Version header
+    var apiVersion = builder.Configuration["Square:ApiVersion"];
+    if (!string.IsNullOrWhiteSpace(apiVersion))
+    {
+        client.DefaultRequestHeaders.Add("Square-Version", apiVersion);
+    }
+});
+
+// Our checkout service that uses the Square HttpClient
+builder.Services.AddScoped<ISquareCheckoutService, SquareCheckoutService>();
+
+// --- Session (optional, but safe to keep) ---
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 // Register EF Core DbContext with the connection string from configuration
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -70,6 +103,8 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.UseSession();
 
 // Map attribute-routed API controllers: /api/...
 app.MapControllers();

@@ -17,6 +17,12 @@ namespace ClipperCoffeeCorner.Controllers
             _service = service;
         }
 
+        // =================================
+        // === Order Placed Notification ===
+        // =================================
+        // 1. Gets estimated wait time
+        // 2. Sends notification to customer
+        // 3. Returns estimated wait time to caller (if UI wants to display it or something)
         [HttpPost("order-placed")]
         public async Task<IActionResult> OrderPlaced([FromBody] Order order)
         {
@@ -36,16 +42,21 @@ namespace ClipperCoffeeCorner.Controllers
             }
         }
 
+        // ====================================
+        // === Order Completed Notification ===
+        // ====================================
+        // 1. Sends notification to customer
+        // -. Could also take care of updating the order, but I am assuming that is handled elsewhere and this just needs to send the notification
         [HttpPost("order-complete")]
         public async Task<IActionResult> OrderComplete([FromBody] int orderId)
         {
             try
             {
-                var order = await _service.CompleteOrderAsync(orderId);
+                await _service.CompleteOrderAsync(orderId);
                 return Ok(new
                 {
-                    Message = "Order completed and customer notified",
-                    OrderId = order.OrderId
+                    Message = "Customer notified",
+                    OrderId = orderId
                 });
             }
             catch (Exception ex)
@@ -54,9 +65,11 @@ namespace ClipperCoffeeCorner.Controllers
             }
         }
 
-        // gets popular items of a given menu category
-        // if no category is given it just gives overall popular items
-        // does not work yet
+        // ==============================
+        // === Get Popular Menu Items ===
+        // ==============================
+        // 1. gets popular items of a given menu category (if not categoryId provided, gets overall popular items)
+        // 2. returns list of popular items with their order counts (list of MenuItemPopularityDto objects)
         [HttpGet("popular-items")]
         public async Task<IActionResult> GetPopularItems([FromQuery] int? categoryId = null)
         {
@@ -71,10 +84,12 @@ namespace ClipperCoffeeCorner.Controllers
             }
         }
 
+
+
+
         // =========================
         // === TESTING ENDPOINTS ===
         // =========================
-
 
         // Test Twilio and SendGrid notifications
         [HttpPost("test-notifications")]
@@ -88,7 +103,7 @@ namespace ClipperCoffeeCorner.Controllers
                 Status = "Placed",
                 PlacedAt = DateTime.UtcNow,
                 TotalAmount = 9.99m,
-                OrderItems = new List<OrderItem>() 
+                OrderItems = new List<OrderItem>
                 {
                     new OrderItem
                     {
@@ -96,19 +111,32 @@ namespace ClipperCoffeeCorner.Controllers
                         OrderId = 1,
                         CombinationId = 1,
                         Quantity = 1,
-                        UnitPrice = 9.99m,
-                    },
+                        UnitPrice = 9.99m
+                    }
                 }
             };
 
             var fakeUser = new UserResponse
             {
                 NotificationPref = notificationPref ?? "Email",
-                PhoneNumber = "+18777804236", // Twilio Virtual Phone Number
-                Email = "mamarsh7of9@gmail.com" // test email
+                PhoneNumber = "+18777804236",
+                Email = "mamarsh7of9@gmail.com"
             };
 
-            await _service.TestNotificationsAsync(fakeOrder, fakeUser);
+            var fakeItemDetails = new List<OrderItemDetailsDto>
+            {
+                new OrderItemDetailsDto
+                {
+                    MenuItemId = 1,
+                    MenuItemName = "Test Latte",
+                    Options = new List<string> { "Oat Milk", "Extra Shot" },
+                    Quantity = 1,
+                    UnitPrice = 9.99m,
+                    LineTotal = 9.99m
+                }
+            };
+
+            await _service.TestNotificationsAsync(fakeOrder, fakeUser, fakeItemDetails);
 
             return Ok("Test notification triggered");
         }

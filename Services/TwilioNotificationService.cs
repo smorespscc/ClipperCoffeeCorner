@@ -19,17 +19,19 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // send order placed SMS notification
-        public async Task SendPlacedAsync(Order order, UserResponse user, double estimatedWaitTime)
+        public async Task SendPlacedAsync(Order order, UserResponse user, double estimatedWaitTime, List<OrderItemDetailsDto> itemDetails)
         {
             if (user.NotificationPref != "Sms" ||
                 string.IsNullOrWhiteSpace(user.PhoneNumber))
                 return;
 
-            var itemsList = string.Join(", ", order.OrderItems.Select(oi => $"{oi.OrderItemId}"));
+            var itemsList = string.Join(", ",
+                itemDetails.Select(i => $"{i.MenuItemName} x{i.Quantity}"));
 
-            var message = $"Order placed!\n" +
-                          $"Items: {itemsList}\n" +
-                          $"Est. wait: {estimatedWaitTime} min";
+            var message =
+                $"Order placed!\n" +
+                $"Items: {itemsList}\n" +
+                $"Est. wait: {estimatedWaitTime} min";
 
             try
             {
@@ -47,13 +49,18 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // send order completed SMS notification
-        public async Task SendCompletionAsync(OrderDetailsDto order, UserResponse user)
+        public async Task SendCompletionAsync(OrderDetailsDto order, UserResponse user, List<OrderItemDetailsDto> itemDetails)
         {
             if (user.NotificationPref != "Sms" ||
                 string.IsNullOrWhiteSpace(user.PhoneNumber))
                 return;
 
-            var message = $"Your order is ready!";
+            var itemsList = string.Join(", ",
+                itemDetails.Select(i => $"{i.MenuItemName} x{i.Quantity}"));
+
+            var message =
+                $"Your order #{order.OrderId} is ready!\n" +
+                $"Items: {itemsList}";
 
             try
             {
