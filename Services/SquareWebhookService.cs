@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 
-namespace Services
+namespace ClipperCoffeeCorner.Services
 {
     public interface ISquareWebhookService
     {

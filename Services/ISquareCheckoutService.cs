@@ -1,7 +1,7 @@
 using ClipperCoffeeCorner.Models;
 using System.Threading.Tasks;
 
-namespace Services
+namespace ClipperCoffeeCorner.Services
 {
     public interface ISquareCheckoutService
     {

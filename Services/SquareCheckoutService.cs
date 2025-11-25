@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using ClipperCoffeeCorner.Models;
 using ClipperCoffeeCorner.Data;
 
-namespace Services
+namespace ClipperCoffeeCorner.Services
 {
     public class SquareCheckoutService : ISquareCheckoutService
     {
@@ -21,16 +21,16 @@ namespace Services
         private readonly AppDbContext _db;
 
         public SquareCheckoutService(IHttpClientFactory httpFactory, IConfiguration config, AppDbContext dbContext)
-        {
+    {
             _httpClient = httpFactory.CreateClient("Square");
             _accessToken = config["Square:AccessToken"] ?? throw new ArgumentNullException("Square:AccessToken");
             _locationId = config["Square:LocationId"] ?? throw new ArgumentNullException("Square:LocationId");
             _apiVersion = config["Square:ApiVersion"] ?? "2023-08-16";
             _db = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        }
+    }
 
         public async Task<string> CreatePaymentLinkAsync(Order order, string? redirectUrl = null)
-        {
+    {
             if (order is null) throw new ArgumentNullException(nameof(order));
 
             // Load authoritative order from the database (including items + combination metadata)
@@ -41,30 +41,30 @@ namespace Services
                 .FirstOrDefaultAsync(o => o.OrderId == order.OrderId);
 
             if (dbOrder is null)
-            {
+    {
                 throw new InvalidOperationException($"Order with id {order.OrderId} not found in database.");
-            }
+    }
 
             var idempotencyKey = dbOrder.IdempotencyKey;
 
             // Map DB OrderItems to Square's expected line_items shape.
             // Square expects quantity as a string and amounts as the smallest currency unit (e.g., cents).
             var lineItems = dbOrder.OrderItems.Select(oi => new
-            {
+        {
                 name = $"Item #{oi.CombinationId}",
                 quantity = oi.Quantity.ToString(),
                 base_price_money = new
                 {
                     amount = Convert.ToInt64(Math.Round(oi.UnitPrice * 100m)), // decimal dollars -> long cents
                     currency = "USD"
-                }
+        }
             }).ToArray();
 
             var taxUid = Guid.NewGuid().ToString();
             var taxes = new[]
             {
                 new
-                {
+        {
                     uid = taxUid,
                     name = "Sales Tax",
                     percentage = "9.8",
@@ -109,7 +109,7 @@ namespace Services
             if (doc.RootElement.TryGetProperty("payment_link", out var paymentLink))
             {
                 if (paymentLink.TryGetProperty("url", out var url))
-                {
+            {
                     return url.GetString()!;
                 }
             }

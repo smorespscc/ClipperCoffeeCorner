@@ -1,10 +1,13 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Services;
 using System.Threading.Tasks;
 using ClipperCoffeeCorner.Models;
 using ClipperCoffeeCorner.Extensions;
 using ClipperCoffeeCorner.Data;
+using ClipperCoffeeCorner.Services;
 using System;
 using System.Linq;
 
@@ -41,17 +44,17 @@ namespace Controllers
             {
                 // Compose order object from the database where OrderId == 1 for demo purposes
                 order = await _dbContext.Set<Order>()
-                                        .Include(o => o.OrderItems)
+                .Include(o => o.OrderItems)
                                         .Include(o => o.User)
                                         .FirstOrDefaultAsync(o => o.OrderId == 1);
-                if (order == null)
-                {
+            if (order == null)
+            {
                     return BadRequest("No order found in database with id = 1.");
-                }
+            }
 
                 // Ensure required fields have sensible defaults for the checkout flow
                 if (order.IdempotencyKey == Guid.Empty)
-                {
+            {
                     order.IdempotencyKey = Guid.NewGuid();
                 }
 
@@ -61,7 +64,7 @@ namespace Controllers
                 }
 
                 if (order.PlacedAt == default)
-                {
+            {
                     order.PlacedAt = DateTime.UtcNow;
                 }
 

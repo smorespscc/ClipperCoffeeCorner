@@ -3,6 +3,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Net.Http.Headers;
+using ClipperCoffeeCorner.Data;
+using ClipperCoffeeCorner.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +24,6 @@ builder.Logging.AddAzureWebAppDiagnostics();
 builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
 builder.Logging.AddFilter("System", LogLevel.Warning);
 builder.Logging.AddFilter("Controllers.WebhookController", LogLevel.Information);
-
-// -------------------------------------------
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -50,10 +54,15 @@ builder.Services.AddHttpClient("Square", client =>
     }
 });
 
-builder.Services.AddScoped<Services.ISquareCheckoutService, Services.SquareCheckoutService>();
+builder.Services.AddScoped<ISquareCheckoutService, SquareCheckoutService>();
 
 // Register webhook verification service so WebhookController can be constructed
-builder.Services.AddScoped<Services.ISquareWebhookService, Services.SquareWebhookService>();
+builder.Services.AddScoped<ISquareWebhookService, SquareWebhookService>();
+
+// EF Core DbContext
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
@@ -80,6 +89,10 @@ app.UseSession();
 
 app.UseAuthorization();
 
+// Attribute-routed API controllers: /api/...
+app.MapControllers();
+
+// MVC default route
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
