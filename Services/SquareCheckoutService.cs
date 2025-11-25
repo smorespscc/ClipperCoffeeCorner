@@ -77,7 +77,7 @@ namespace ClipperCoffeeCorner.Services
                         // Use a demo reference id so Square responses can still be correlated if needed
                         reference_id = "DEMO_ORDER",
                         line_items = demoLineItems,
-                        taxes = taxes
+                        taxes
                     },
                     checkout_options = new
                     {
