@@ -28,8 +28,10 @@ namespace Controllers
             var requestUrl = $"{Request.Scheme}://{Request.Host}{Request.Path}{Request.QueryString}";
             var signature = Request.Headers["x-square-signature"].ToString();
 
+            _logger.LogInformation("Received Square webhook: {Body}", body);
             if (!_webhookService.VerifySignature(requestUrl, body, signature))
             {
+                _logger.LogWarning("Invalid Square webhook signature.");
                 return BadRequest();
             }
 

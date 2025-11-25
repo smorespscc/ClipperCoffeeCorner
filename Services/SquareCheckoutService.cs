@@ -49,88 +49,57 @@ namespace ClipperCoffeeCorner.Services
                 }
             };
 
-            if (order is null)
+            // if Order is null load first order with new idempotency key for demo
+            order ??= new Order
             {
-                var demoIdempotency = Guid.NewGuid().ToString();
+                OrderId = 3,
+                IdempotencyKey = Guid.NewGuid()
+            };
+            // Load authoritative order from the database (including items + combination metadata)
+            var dbOrder = await _db.Orders
+                .AsNoTracking()
+                .Include(o => o.OrderItems!)
+                    .ThenInclude(oi => oi.Combination)
+                .FirstOrDefaultAsync(o => o.OrderId == order.OrderId);
 
-                // Demo line items (single sample item). Amounts are in the smallest currency unit (cents).
-                var demoLineItems = new[]
+            if (dbOrder is null)
+            {
+                throw new InvalidOperationException($"Order with id {order.OrderId} not found in database.");
+            }
+
+            //var idempotencyKey = dbOrder.IdempotencyKey;
+            var idempotencyKey = Guid.NewGuid().ToString();
+
+            // Map DB OrderItems to Square's expected line_items shape.
+            // Square expects quantity as a string and amounts as the smallest currency unit (e.g., cents).
+            var lineItems = dbOrder.OrderItems.Select(oi => new
+            {
+                // show the combination code when available, otherwise fallback to the id
+                name = oi.Combination?.Code ?? $"Item #{oi.CombinationId}",
+                quantity = oi.Quantity.ToString(),
+                base_price_money = new
                 {
-                    new
-                    {
-                        name = "Demo Cappuccino",
-                        quantity = "1",
-                        base_price_money = new
-                {
-                    amount = 499L, // $4.99
+                    amount = Convert.ToInt64(Math.Round(oi.UnitPrice * 100m)), // decimal dollars -> long cents
                     currency = "USD"
                 }
-                    }
-                };
+            }).ToArray();
 
-                payload = new
-                {
-                    idempotency_key = demoIdempotency,
-                    order = new
-                    {
-                        location_id = _locationId,
-                        // Use a demo reference id so Square responses can still be correlated if needed
-                        reference_id = "DEMO_ORDER",
-                        line_items = demoLineItems,
-                        taxes
-                    },
-                    checkout_options = new
-                    {
-                        redirect_url = redirectUrl
-                    }
-                };
-            }
-            else
+            payload = new
             {
-                // Load authoritative order from the database (including items + combination metadata)
-                var dbOrder = await _db.Orders
-                    .AsNoTracking()
-                    .Include(o => o.OrderItems!)
-                        .ThenInclude(oi => oi.Combination)
-                    .FirstOrDefaultAsync(o => o.OrderId == order.OrderId);
-
-                if (dbOrder is null)
+                idempotency_key = idempotencyKey,
+                order = new
                 {
-                    throw new InvalidOperationException($"Order with id {order.OrderId} not found in database.");
+                    location_id = _locationId,
+                    // Include the local order id as the order.reference_id so Square can correlate
+                    reference_id = dbOrder.OrderId.ToString(),
+                    line_items = lineItems,
+                    taxes
+                },
+                checkout_options = new
+                {
+                    redirect_url = redirectUrl
                 }
-
-                var idempotencyKey = dbOrder.IdempotencyKey;
-
-                // Map DB OrderItems to Square's expected line_items shape.
-                // Square expects quantity as a string and amounts as the smallest currency unit (e.g., cents).
-                var lineItems = dbOrder.OrderItems.Select(oi => new
-                {
-                    name = $"Item #{oi.CombinationId}",
-                    quantity = oi.Quantity.ToString(),
-                    base_price_money = new
-                    {
-                        amount = Convert.ToInt64(Math.Round(oi.UnitPrice * 100m)), // decimal dollars -> long cents
-                        currency = "USD"
-                    }
-                }).ToArray();
-
-                payload = new
-                {
-                    idempotency_key = idempotencyKey,
-                    order = new
-                    {
-                        location_id = _locationId,
-                        // Include the local order id as the order.reference_id so Square can correlate
-                        reference_id = dbOrder.OrderId.ToString(),
-                        line_items = lineItems,
-                        taxes
-                    },
-                    checkout_options = new
-                    {
-                        redirect_url = redirectUrl
-                    }
-                };
-            }
+            };
 
             var json = JsonSerializer.Serialize(payload);
             using var request = new HttpRequestMessage(HttpMethod.Post, "/v2/online-checkout/payment-links");
