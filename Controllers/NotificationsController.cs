@@ -140,5 +140,14 @@ namespace ClipperCoffeeCorner.Controllers
 
             return Ok("Test notification triggered");
         }
+
+        // test wait time estimation
+        [HttpPost("test-wait-time")]
+        public IActionResult TestWaitTime()
+        {
+            double estimation = _service.TestWaitTimeEstimation();
+
+            return Ok(estimation);
+        }
     }
 }

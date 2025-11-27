@@ -131,7 +131,7 @@ namespace ClipperCoffeeCorner.Services
         public async Task<List<PopularItemDto>> GetPopularItemsAsync(int? menuCategoryId)
         {
             var response =
-                await _http.GetAsync($"/api/orders/popular-items?n={50}");
+                await _http.GetAsync($"/api/orders/popular-items?n={50}"); // gets popular items based on 50 most recent orders
 
             if (!response.IsSuccessStatusCode)
             {
@@ -153,6 +153,7 @@ namespace ClipperCoffeeCorner.Services
             // Order by popularity again just to be safe
             items = items
                 .OrderByDescending(i => i.TotalQuantity)
+                .Take(10) // limit results to top 10
                 .ToList();
 
             return items;
@@ -183,6 +184,8 @@ namespace ClipperCoffeeCorner.Services
         // =======================
         // === TESTING METHODS ===
         // =======================
+
+        // test notifications
         public async Task TestNotificationsAsync(Order order, UserResponse user, List<OrderItemDetailsDto> items)
         {
             double testWaitTime = 7.5;
@@ -210,6 +213,54 @@ namespace ClipperCoffeeCorner.Services
                     user,
                     items);
             }
+        }
+
+        // test wait time estimation with fake order
+        public double TestWaitTimeEstimation()
+        {
+            // set fake order
+            var fakeOrder = new Order
+            {
+                OrderId = 999,
+                UserId = null,
+                IdempotencyKey = Guid.NewGuid(),
+                Status = "Placed",
+                PlacedAt = DateTime.UtcNow,
+                TotalAmount = 18.97m
+            };
+
+            // set fake order items
+            var fakeItems = new List<OrderItemDetailsDto>
+            {
+                new OrderItemDetailsDto
+                {
+                    MenuItemId = 1,
+                    MenuItemName = "Sandwhich",
+                    Quantity = 1,
+                    UnitPrice = 9.99m,
+                    LineTotal = 9.99m,
+                    Options = new List<string> { "Extra chicken", "No beans" }
+                },
+                new OrderItemDetailsDto
+                {
+                    MenuItemId = 2,
+                    MenuItemName = "Coffee",
+                    Quantity = 1,
+                    UnitPrice = 4.99m,
+                    LineTotal = 4.99m,
+                    Options = new List<string> { "Extra guac" }
+                },
+                new OrderItemDetailsDto
+                {
+                    MenuItemId = 3,
+                    MenuItemName = "Fries",
+                    Quantity = 1,
+                    UnitPrice = 3.99m,
+                    LineTotal = 3.99m
+                }
+            };
+            double estimatedWaitTime = _estimator.Estimate(fakeOrder, fakeItems);
+            return estimatedWaitTime;
         }
     }
 }
