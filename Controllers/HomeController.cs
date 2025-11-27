@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using ClipperCoffeeCorner.Models;
 using Microsoft.AspNetCore.Mvc;
+using ClipperCoffeeCorner.Models;
 
 namespace ClipperCoffeeCorner.Controllers
 {

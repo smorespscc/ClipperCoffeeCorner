@@ -158,6 +158,7 @@ namespace ClipperCoffeeCorner.Controllers
             return Ok(new
             {
                 order.OrderId,
+                order.UserId, // !!!
                 order.Status,
                 order.PlacedAt,
                 order.CompletedAt,
