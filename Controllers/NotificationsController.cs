@@ -85,8 +85,6 @@ namespace ClipperCoffeeCorner.Controllers
         }
 
 
-
-
         // =========================
         // === TESTING ENDPOINTS ===
         // =========================

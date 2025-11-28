@@ -90,7 +90,7 @@ namespace ClipperCoffeeCorner.Controllers
                 UserRole = user.UserRole,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber, // !!!
-                NotificationPref = user.NotificationPref // !!!
+                NotificationPref = user.NotificationPref ?? "None" // !!!
             };
         }
 
