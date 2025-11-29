@@ -7,17 +7,22 @@ namespace ClipperCoffeeCorner.Services
 {
     public class WaitTimeNotificationService
     {
+        private readonly string? _testToEmail;
+        private readonly string? _testToPhoneNumber;
         private readonly IWaitTimeEstimator _estimator;
         private readonly IEnumerable<INotificationService> _notifier;
         private readonly ILogger<WaitTimeNotificationService> _logger;
         private readonly HttpClient _http;
 
         public WaitTimeNotificationService(
+            IConfiguration config,
             IWaitTimeEstimator estimator,
             IEnumerable<INotificationService> notifier,
             ILogger<WaitTimeNotificationService> logger,
             IHttpClientFactory factory)
         {
+            _testToEmail = config["NotificationTestDetails:ToEmail"]!;
+            _testToPhoneNumber = config["NotificationTestDetails:ToPhoneNumber"]!;
             _estimator = estimator;
             _notifier = notifier;
             _logger = logger;
@@ -31,9 +36,12 @@ namespace ClipperCoffeeCorner.Services
         // 1. get estimated wait time
         // 2. send notification
         // 3. return estimated wait time if UI wants to display it in the app or something
-        public async Task<double> ProcessNewOrder(Order order)
+        public async Task<double> ProcessNewOrder(int orderId)
         {
-            ArgumentNullException.ThrowIfNull(order);
+            ArgumentNullException.ThrowIfNull(orderId);
+
+            // get order from Orders API
+            var order = await GetOrderById(orderId);
 
             // get order item details from Orders API
             var itemsResponse = await _http.GetAsync($"/api/orders/{order.OrderId}/items-detail");
@@ -121,7 +129,6 @@ namespace ClipperCoffeeCorner.Services
             }
         }
 
-
         // =========================
         // === Get Popular Items ===
         // =========================
@@ -159,7 +166,27 @@ namespace ClipperCoffeeCorner.Services
             return items;
         }
 
-        // DTOs for deserializing order details from Orders API
+        // ====================================
+        // ===           HELPERS            ===
+        // ====================================
+        // - for stuff like taking an OrderId and returning an Order object with the fields filled in
+        public async Task<OrderDetailsDto> GetOrderById (int orderId)
+        {
+            var orderResponse = await _http.GetAsync($"/api/orders/{orderId}");
+            orderResponse.EnsureSuccessStatusCode();
+            var order = await orderResponse.Content.ReadFromJsonAsync<OrderDetailsDto>();
+            if (order is null)
+            {
+                throw new InvalidOperationException($"Order {orderId} not found.");
+            }
+            return order;
+        }
+
+        // ====================================
+        // === DATA TRANSFER OBJECTS (DTOs) ===
+        // ====================================
+        // for deserializing order details from Orders API
+        // and for condensing data from multiple tables
         public class OrderDetailsDto
         {
             public int OrderId { get; set; }
@@ -168,50 +195,100 @@ namespace ClipperCoffeeCorner.Services
             public DateTime PlacedAt { get; set; }
             public DateTime? CompletedAt { get; set; }
             public decimal TotalAmount { get; set; }
-            public List<OrderItemDetailsDto> Items { get; set; } = new();
+            public List<OrderItemsDto> Items { get; set; } = new();
         }
 
-        public class OrderSummaryDto
+        // !!! This is different from OrderItemDetailsDTO !!!
+        // OrderItemsDto mirrors the "OrderItems" field in the Order model
+        // OrderItemDetailsDto includes more info about item names and MenuIdItemIds for use in notifications
+        public record OrderItemsDto
         {
-            public int OrderId { get; set; }
-            public int? UserId { get; set; }
-            public string Status { get; set; } = null!;
-            public DateTime PlacedAt { get; set; }
-            public DateTime? CompletedAt { get; set; }
-            public decimal TotalAmount { get; set; }
+            public int OrderItemId { get; init; }
+            public int OrderId { get; init; }
+            public int CombinationId { get; init; }
+            public int Quantity { get; init; }
+            public decimal UnitPrice { get; init; }
+            public decimal LineTotal { get; init; }
         }
+
+
 
         // =======================
         // === TESTING METHODS ===
         // =======================
 
         // test notifications
-        public async Task TestNotificationsAsync(Order order, UserResponse user, List<OrderItemDetailsDto> items)
+        public async Task TestNotificationsAsync(string? notificationPref)
         {
+            // create fake Order object
+            var fakeOrder = new OrderDetailsDto
+            {
+                OrderId = 1,
+                UserId = 1,
+                Status = "Placed",
+                PlacedAt = DateTime.UtcNow,
+                TotalAmount = 9.99m,
+                Items = new List<OrderItemsDto>
+                {
+                    new OrderItemsDto
+                    {
+                        OrderItemId = 1,
+                        OrderId = 1,
+                        CombinationId = 1,
+                        Quantity = 1,
+                        UnitPrice = 9.99m
+                    }
+                }
+            };
+
+            // create fake UserResponse object
+            var fakeUser = new UserResponse
+            {
+                NotificationPref = notificationPref ?? "Email",
+                PhoneNumber = _testToPhoneNumber,
+                Email = _testToEmail
+            };
+
+            // create fake order item details
+            var fakeItemDetails = new List<OrderItemDetailsDto>
+            {
+                new OrderItemDetailsDto
+                {
+                    MenuItemId = 1,
+                    MenuItemName = "Test Latte",
+                    Options = new List<string> { "Oat Milk", "Extra Shot" },
+                    Quantity = 1,
+                    UnitPrice = 9.99m,
+                    LineTotal = 9.99m
+                }
+            };
+
+            // create fake completed order details
+            var fakeCompletedOrder = new OrderDetailsDto
+            {
+                OrderId = fakeOrder.OrderId,
+                UserId = fakeOrder.UserId,
+                Status = "Completed",
+                PlacedAt = DateTime.UtcNow,
+                CompletedAt = DateTime.UtcNow,
+                TotalAmount = fakeOrder.TotalAmount
+            };
+
+            // fake wait time
             double testWaitTime = 7.5;
 
             foreach (var notifier in _notifier)
             {
                 await notifier.SendPlacedAsync(
-                    order,
-                    user,
+                    fakeOrder,
+                    fakeUser,
                     testWaitTime,
-                    items);
-
-                var fakeCompletedOrder = new OrderDetailsDto
-                {
-                    OrderId = order.OrderId,
-                    UserId = order.UserId,
-                    Status = "Completed",
-                    PlacedAt = DateTime.UtcNow,
-                    CompletedAt = DateTime.UtcNow,
-                    TotalAmount = order.TotalAmount
-                };
+                    fakeItemDetails);
 
                 await notifier.SendCompletionAsync(
                     fakeCompletedOrder,
-                    user,
-                    items);
+                    fakeUser,
+                    fakeItemDetails);
             }
         }
 
@@ -219,14 +296,24 @@ namespace ClipperCoffeeCorner.Services
         public double TestWaitTimeEstimation()
         {
             // set fake order
-            var fakeOrder = new Order
+            var fakeOrder = new OrderDetailsDto
             {
                 OrderId = 999,
                 UserId = null,
-                IdempotencyKey = Guid.NewGuid(),
                 Status = "Placed",
                 PlacedAt = DateTime.UtcNow,
-                TotalAmount = 18.97m
+                TotalAmount = 18.97m,
+                Items = new List<OrderItemsDto>
+                {
+                    new OrderItemsDto
+                    {
+                        OrderItemId = 1,
+                        OrderId = 1,
+                        CombinationId = 1,
+                        Quantity = 1,
+                        UnitPrice = 9.99m
+                    }
+                }
             };
 
             // set fake order items

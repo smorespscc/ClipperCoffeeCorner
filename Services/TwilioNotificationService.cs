@@ -19,9 +19,9 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // send order placed SMS notification
-        public async Task SendPlacedAsync(Order order, UserResponse user, double estimatedWaitTime, List<OrderItemDetailsDto> itemDetails)
+        public async Task SendPlacedAsync(OrderDetailsDto order, UserResponse user, double estimatedWaitTime, List<OrderItemDetailsDto> itemDetails)
         {
-            if (user.NotificationPref != "Sms" ||
+            if (!string.Equals(user.NotificationPref, "Sms", StringComparison.OrdinalIgnoreCase) ||
                 string.IsNullOrWhiteSpace(user.PhoneNumber))
                 return;
 
@@ -51,7 +51,7 @@ namespace ClipperCoffeeCorner.Services
         // send order completed SMS notification
         public async Task SendCompletionAsync(OrderDetailsDto order, UserResponse user, List<OrderItemDetailsDto> itemDetails)
         {
-            if (user.NotificationPref != "Sms" ||
+            if (!string.Equals(user.NotificationPref, "Sms", StringComparison.OrdinalIgnoreCase) ||
                 string.IsNullOrWhiteSpace(user.PhoneNumber))
                 return;
 

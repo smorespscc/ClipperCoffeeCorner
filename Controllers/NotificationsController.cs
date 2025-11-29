@@ -23,16 +23,18 @@ namespace ClipperCoffeeCorner.Controllers
         // 1. Gets estimated wait time
         // 2. Sends notification to customer
         // 3. Returns estimated wait time to caller (if UI wants to display it or something)
-        [HttpPost("order-placed")]
-        public async Task<IActionResult> OrderPlaced([FromBody] Order order)
+
+        // POST: api/notifications/order-placed/1
+        [HttpPost("order-placed/{orderId}")]
+        public async Task<IActionResult> OrderPlaced(int orderId)
         {
             try
             {
-                var estimatedWaitTime = await _service.ProcessNewOrder(order);
+                var estimatedWaitTime = await _service.ProcessNewOrder(orderId);
                 return Ok(new
                 {
                     Message = "Order placed successfully",
-                    OrderId = order.OrderId,
+                    OrderId = orderId,
                     EstimatedWaitMinutes = estimatedWaitTime,
                 });
             }
@@ -47,8 +49,10 @@ namespace ClipperCoffeeCorner.Controllers
         // ====================================
         // 1. Sends notification to customer
         // -. Could also take care of updating the order, but I am assuming that is handled elsewhere and this just needs to send the notification
-        [HttpPost("order-complete")]
-        public async Task<IActionResult> OrderComplete([FromBody] int orderId)
+
+        // POST: api/notifications/order-complete/1
+        [HttpPost("order-complete/{orderId}")]
+        public async Task<IActionResult> OrderComplete(int orderId)
         {
             try
             {
@@ -70,8 +74,10 @@ namespace ClipperCoffeeCorner.Controllers
         // ==============================
         // 1. gets popular items of a given menu category (if not categoryId provided, gets overall popular items)
         // 2. returns list of popular items with their order counts (list of MenuItemPopularityDto objects)
+
+        // GET: api/notifications/popular-items?categoryId=2
         [HttpGet("popular-items")]
-        public async Task<IActionResult> GetPopularItems([FromQuery] int? categoryId = null)
+        public async Task<IActionResult> GetPopularItems(int? categoryId = null)
         {
             try
             {
@@ -90,56 +96,17 @@ namespace ClipperCoffeeCorner.Controllers
         // =========================
 
         // Test Twilio and SendGrid notifications
+        // POST: api/notifications/test-notifications?notificationPref=Email
         [HttpPost("test-notifications")]
-        public async Task<IActionResult> TestNotifications(string? notificationPref)
+        public async Task<IActionResult> TestNotifications(string notificationPref = "Email")
         {
-            var fakeOrder = new Order
-            {
-                OrderId = 1,
-                UserId = 1,
-                IdempotencyKey = Guid.NewGuid(),
-                Status = "Placed",
-                PlacedAt = DateTime.UtcNow,
-                TotalAmount = 9.99m,
-                OrderItems = new List<OrderItem>
-                {
-                    new OrderItem
-                    {
-                        OrderItemId = 1,
-                        OrderId = 1,
-                        CombinationId = 1,
-                        Quantity = 1,
-                        UnitPrice = 9.99m
-                    }
-                }
-            };
+            await _service.TestNotificationsAsync(notificationPref);
 
-            var fakeUser = new UserResponse
-            {
-                NotificationPref = notificationPref ?? "Email",
-                PhoneNumber = "+18777804236",
-                Email = "mamarsh7of9@gmail.com"
-            };
-
-            var fakeItemDetails = new List<OrderItemDetailsDto>
-            {
-                new OrderItemDetailsDto
-                {
-                    MenuItemId = 1,
-                    MenuItemName = "Test Latte",
-                    Options = new List<string> { "Oat Milk", "Extra Shot" },
-                    Quantity = 1,
-                    UnitPrice = 9.99m,
-                    LineTotal = 9.99m
-                }
-            };
-
-            await _service.TestNotificationsAsync(fakeOrder, fakeUser, fakeItemDetails);
-
-            return Ok("Test notification triggered");
+            return Ok($"Test {notificationPref} notification triggered");
         }
 
         // test wait time estimation
+        // POST: api/notifications/test-wait-time
         [HttpPost("test-wait-time")]
         public IActionResult TestWaitTime()
         {

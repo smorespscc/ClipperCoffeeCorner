@@ -25,9 +25,9 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // Send order placement notification
-        public async Task SendPlacedAsync(Order order, UserResponse user, double estimatedWaitTime, List<OrderItemDetailsDto> itemDetails)
+        public async Task SendPlacedAsync(OrderDetailsDto order, UserResponse user, double estimatedWaitTime, List<OrderItemDetailsDto> itemDetails)
         {
-            if (user.NotificationPref != "Email" ||
+            if (!string.Equals(user.NotificationPref, "Email", StringComparison.OrdinalIgnoreCase) ||
                 string.IsNullOrWhiteSpace(user.Email))
                 return;
 
@@ -68,7 +68,7 @@ namespace ClipperCoffeeCorner.Services
         // Send order completion notification
         public async Task SendCompletionAsync(OrderDetailsDto order, UserResponse user, List<OrderItemDetailsDto> itemDetails)
         {
-            if (user.NotificationPref != "Email" ||
+            if (!string.Equals(user.NotificationPref, "Email", StringComparison.OrdinalIgnoreCase) ||
                 string.IsNullOrWhiteSpace(user.Email))
                 return;
 

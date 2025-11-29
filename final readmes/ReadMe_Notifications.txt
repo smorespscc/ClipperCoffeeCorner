@@ -1,22 +1,61 @@
 		Mattox Marsh - SMS / E-Mail & API Work
 
-	Summary
--
+	=== Summary ===
+I worked on implementing SMS and Email notifications for orders when they are placed and when they are marked as completed. I also worked on an API for notifications 
+and wait time estimation so that it would be easy to integrate with the rest of the project and to make our features more modular and "future-proof". Our notifications
+and wait time estimation features are accessible through simple calls to the endpoints in NotificationsController and only require single parameters like order ID to function.
 
-	Concept
--
+	=== Concept ===
+The two main endpoints are OrderPlaced and OrderComplete in NotificationsController, and they are both pretty much the same except they call different methods in the 
+WaitTimeEstimator service. The general flow is...
 
-	Challenges
--
+Call to NotificationsController 
+	>>> Call to WaitTimeEstimationService
+		> get order info from DB API
+		> get detailed item info from DB API
+		> call WaitTimeEstimator service with order info to get estimated wait time
+		> get user info from DB API (if the order is associated with a userId)
+		> call notification services with order and user info to send notifications
 
-	What Worked Well & What Didn't
--
+	=== Challenges ===
+The main headache was getting SMS to work because of some new regulations that went into effect in 2024 that require verification and stuff to use SMS services. I was never
+able to actually get verified to send actual SMS messages, so I opted for using Twilio instead of Azure for SMS because Twilio has a virtual phone you can use for testing.
+Another kind of self-inflicted challenge was having to re-write a bunch of code to make it compatible with the data models the other teams were using. I should have established 
+all that stuff first before doing a lot of the work on notifications, but I was impatient.
 
-	Differences in Approach or Special Configuration
--
+	=== What Worked Well & What Didn't ===
+Everything with notifications works well because really, there isn't anything complicated going on. The main improvement I think could be made is trimming down all of our
+DTOs and making all of the methods work with just 1 or 2 standard data models, because a lot of our data models have overlapping fields and stuff. Also the names of DTOs
+and fields within them can be a little confusing, so I'd probably fix those too. Although that would have to be done with the other teams because we share the DTOs and stuff.
 
-	Advice for Next Cohort
--
+	=== Differences in Approach or Special Configuration ===
+Setting up Sms and Email notifications is pretty straightforward but there are a few of steps. You gotta set up the Twilio and SendGrid accounts and then fill the
+necessary fields in appsettings.json with the keys and tokens and stuff for your accounts.
+
+1. Set up Twilio account with their guide - https://www.twilio.com/docs/messaging/quickstart
+	- only need to do the "sign up and get a number" part
+	- collect your Account SID, Auth Token, and trial phone number
+	- trial number does not have to be verified to use the virtual phone found in Account Dashboard > Develop > Messaging > Try it out > Send an SMS
+
+2. Set up SendGrid account
+	- In Twilio dashboard, click "Open SendGrid Console" in Develop > Email > Overview
+	- Set up SendGrid account (create a "From"" email and stuff and verify it) (it yells at you for using @gmail but you can ignore it)
+	- collect your API Key, verified "From" email address, and "From" name
+
+3. Fill in appsettings.json with the relevant information.
+	- Fill in all Twilio and SendGrid fields
+	- Also fill in "NotificationTestDetails" with the email and number you want to send to for testing purposes
+	- The "ToPhoneNumber" should be the number of the virtual phone in your Twilio dashboard which can be found in Account Dashboard > Develop > Messaging > Try it out > Send an SMS
+
+4. Run test for notifications and I guess also WaitTimeEstimator while you're at it
+	- build and run the project locally
+	- open windows CMD and type the following commands to run the testing endpoints in NotificationsController
+		- curl -X POST "https://localhost:xxxx/api/notifications/test-notifications?notificationPref=Email" -k
+		- curl -X POST "https://localhost:xxxx/api/notifications/test-wait-time" -k
+		*replace "xxxx" with whatever your port is and change "Email" at the end of the first command to "Sms" to test SMS*
+
+	=== Advice for Next Cohort ===
+What Kyle said vvv
 
 
 		Kyle Geissinger - Wait Estimation & Machine Learning

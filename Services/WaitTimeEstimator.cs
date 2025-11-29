@@ -5,7 +5,7 @@ namespace ClipperCoffeeCorner.Services
 {
     public interface IWaitTimeEstimator
     {
-        double Estimate(Order order, List<OrderItemDetailsDto> itemDetails);
+        double Estimate(OrderDetailsDto order, List<OrderItemDetailsDto> itemDetails);
         void AddCompletedForTraining(OrderDetailsDto order, List<OrderItemDetailsDto> itemDetails);
     }
 
@@ -19,7 +19,7 @@ namespace ClipperCoffeeCorner.Services
         }
 
         // Main estimation method. This is called when a new order is placed with the Order object and is expected to return an estimated wait time
-        public double Estimate(Order order, List<OrderItemDetailsDto> itemDetails)
+        public double Estimate(OrderDetailsDto order, List<OrderItemDetailsDto> itemDetails)
         {
             // Create a comma-separated concatenated string of MenuItemId values from the provided itemDetails.
             // If itemDetails is null or empty, produce an empty string.
@@ -52,6 +52,8 @@ namespace ClipperCoffeeCorner.Services
 
 
         }
+
+
 
     }
 
