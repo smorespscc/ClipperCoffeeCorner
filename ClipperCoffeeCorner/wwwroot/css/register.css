@@ -1,0 +1,14 @@
+/* REGISTER PAGE CUSTOMIZATION
+   - Slightly warmer tone for positive first-time experience
+*/
+
+.auth-card {
+  border-top: 5px solid var(--coffee-medium);
+}
+
+.btn-coffee {
+  background: var(--accent);
+}
+.btn-coffee:hover {
+  background: var(--coffee-medium);
+}
