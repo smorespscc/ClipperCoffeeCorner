@@ -45,7 +45,7 @@ Webhook flow (recommended)
   1. Verify the webhook signature header (Square sends a signature header — validate per Square docs).
   2. Parse event JSON and map to domain actions:
      - Update `Order.Status` (e.g., to `Placed`) and set `PlacedAt` when appropriate.
-  3. Persist changes and return `200 OK`.
+  3. Persist (not completed) changes and return `200 OK`.
 - Security: DO NOT process events until signature verification succeeds.
 
 Database mappings (notes)

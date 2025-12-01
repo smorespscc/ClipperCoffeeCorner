@@ -67,8 +67,10 @@ namespace ClipperCoffeeCorner.Services
                 throw new InvalidOperationException($"Order with id {order.OrderId} not found in database.");
             }
 
-            //var idempotencyKey = dbOrder.IdempotencyKey;
-            var idempotencyKey = Guid.NewGuid().ToString();
+            var idempotencyKey = dbOrder.IdempotencyKey;
+            
+            // Idempotency key is set to a new value only for demo
+            idempotencyKey = Guid.NewGuid();
 
             // Map DB OrderItems to Square's expected line_items shape.
             // Square expects quantity as a string and amounts as the smallest currency unit (e.g., cents).
@@ -90,8 +92,6 @@ namespace ClipperCoffeeCorner.Services
                 order = new
                 {
                     location_id = _locationId,
-                    // Include the local order id as the order.reference_id so Square can correlate
-                    reference_id = dbOrder.OrderId.ToString(),
                     line_items = lineItems,
                     taxes
                 },
@@ -130,7 +130,6 @@ namespace ClipperCoffeeCorner.Services
             {
                 if (paymentLink.TryGetProperty("url", out var url))
                 {
-                    Console.WriteLine(url.GetString());
                     return url.GetString()!;
                 }
             }
