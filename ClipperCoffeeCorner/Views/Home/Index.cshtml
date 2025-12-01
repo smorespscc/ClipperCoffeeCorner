@@ -1,0 +1,62 @@
+﻿@{
+    ViewData["Title"] = "Login";
+    Layout = "_CoffeeLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
+}
+
+<div class="auth-card">
+    <h2>LOGIN</h2>
+
+    <form id="loginForm" novalidate>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+            <div class="invalid-feedback">Please enter a valid email address.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
+            <div class="invalid-feedback">Invalid email or password. Please try again.</div>
+        </div>
+
+        <!-- Staff checkbox -->
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="isStaff">
+            <label class="form-check-label" for="isStaff">I am Staff (eligible for 10% discount)</label>
+        </div>
+
+        <!-- Staff code (hidden by default) -->
+        <div class="mb-3 d-none" id="staffCodeWrapper">
+            <label for="staffCode" class="form-label">Staff Code</label>
+            <input type="text" class="form-control" id="staffCode" name="staffCode" placeholder="Enter staff code">
+            <div class="invalid-feedback">Staff code is required and must be valid. Please verify with the café front desk if unsure.</div>
+        </div>
+
+        <button type="submit" class="btn btn-coffee w-100">Login</button>
+
+        <a href="@Url.Action("Register", "Home")" class="auth-link">Don't have an account? → Register</a>
+    </form>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="loginSuccessModal" tabindex="-1" aria-labelledby="loginSuccessLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+            <div class="modal-body">
+                <div class="mb-3">
+                    <span class="text-success display-4">✔</span>
+                </div>
+                <h4 id="loginSuccessLabel">Login Successful!</h4>
+                <p class="text-muted">Welcome back! Redirecting you to the menu...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/index.js" asp-append-version="true"></script>
+}

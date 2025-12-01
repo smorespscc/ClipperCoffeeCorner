@@ -1,0 +1,62 @@
+/* checkout.css amendments incorporating inline styles from checkout.html */
+
+.checkout-card {
+    max-width: 800px;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+.checkout-header {
+    text-align: center;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+    .checkout-header h2 {
+        margin-bottom: 0;
+    }
+
+.checkout-body {
+    padding: 1rem;
+}
+
+    .checkout-body h5 {
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+.checkout-footer {
+    display: flex;
+    padding: 1rem;
+}
+
+.btn-cancel {
+    background-color: #ccc;
+}
+
+.btn-order {
+    background-color: #6f4e37;
+    color: #fff;
+}
+
+#globalSpecialContainer {
+    margin-top: 1rem;
+}
+
+    #globalSpecialContainer .alert {
+        margin-bottom: 0;
+    }
+
+.table th, .table td {
+    vertical-align: middle;
+}
+
+    .table th.text-end, .table td.text-end {
+        text-align: end;
+    }
+
+#clearAllBtn {
+    font-size: 0.875rem;
+}

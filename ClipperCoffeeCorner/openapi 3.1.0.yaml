@@ -1,0 +1,525 @@
+openapi: 3.1.0
+info:
+  title: Kiosk UI ⇄ Middle Layer API
+  version: 0.1.0-draft
+  description: |
+    First-pass contracts for UI ↔ Middle integration.
+    Defaults applied where undecided: JWT bearer auth, minor units for money, `/v1` versioning, idempotency via `Idempotency-Key`, RFC 9457 problem+json errors,
+    ETag-based caching for menu endpoints, cursor pagination, SSE for realtime updates.
+servers:
+  - url: https://dev.example.com
+    description: Dev
+  - url: https://staging.example.com
+    description: Staging
+  - url: https://api.example.com
+    description: Prod
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+  - name: Menu
+  - name: Popular
+  - name: Queue
+  - name: Orders
+  - name: Events
+x-guidelines:
+  money: Integer minor units (e.g., cents), ISO 4217 currency
+  time: ISO-8601 UTC timestamps
+  idempotency: "All POST endpoints accept Idempotency-Key header; dedupe window 24h"
+  errors: RFC 9457 problem+json with `type`, `title`, `status`, `detail`, `instance`, optional `errors[]`
+  caching: Menu endpoints return ETag; clients SHOULD send If-None-Match
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    CursorParam:
+      name: cursor
+      in: query
+      description: Opaque cursor for pagination
+      schema: { type: string }
+    LimitParam:
+      name: limit
+      in: query
+      description: Page size (max 50)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    StoreIdParam:
+      name: storeId
+      in: query
+      description: Filter by store ID
+      schema: { type: string }
+    PeriodParam:
+      name: period
+      in: query
+      description: Time window for popularity (e.g., 7d, 30d)
+      schema:
+        type: string
+        enum: [ '7d', '30d', '90d' ]
+        default: '7d'
+  headers:
+    IdempotencyKey:
+      description: A unique key to make the request idempotent.
+      schema: { type: string }
+    XCorrelationId:
+      description: Correlates logs and traces across services.
+      schema: { type: string }
+  responses:
+    ProblemJson:
+      description: Error response
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotModified:
+      description: Not Modified
+  schemas:
+    Problem:
+      type: object
+      required: [ type, title, status ]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+    User:
+      type: object
+      required: [ id, email, createdAt ]
+      properties:
+        id: { type: string, example: usr_123 }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true, example: "+12065551234" }
+        firstName: { type: string, nullable: true }
+        lastName: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    AuthSession:
+      type: object
+      required: [ accessToken, expiresAt ]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string, nullable: true }
+        expiresAt: { type: string, format: date-time }
+        userId: { type: string }
+    MenuCategory:
+      type: object
+      required: [ id, name, position ]
+      properties:
+        id: { type: string, example: cat_coffee }
+        name: { type: string }
+        position: { type: integer }
+        isActive: { type: boolean, default: true }
+    Choice:
+      type: object
+      required: [ id, label ]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        deltaMinor: { type: integer, description: Price delta in minor units, example: 50 }
+    OptionSet:
+      type: object
+      required: [ id, name, type, choices ]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [ single, multi ] }
+        min: { type: integer, default: 0 }
+        max: { type: integer, nullable: true }
+        choices:
+          type: array
+          items: { $ref: '#/components/schemas/Choice' }
+    MenuItem:
+      type: object
+      required: [ id, categoryId, name, basePriceMinor, isAvailable ]
+      properties:
+        id: { type: string, example: itm_latte_md }
+        categoryId: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        imageUrl: { type: string, format: uri, nullable: true }
+        basePriceMinor: { type: integer, example: 495 }
+        isAvailable: { type: boolean }
+        options:
+          type: array
+          items: { $ref: '#/components/schemas/OptionSet' }
+        availability:
+          type: object
+          properties:
+            timeOfDay: { type: string, example: "06:00-14:00" }
+            daysOfWeek: { type: array, items: { type: integer, minimum: 1, maximum: 7 } }
+    PopularItem:
+      type: object
+      required: [ itemId, rank, period ]
+      properties:
+        itemId: { type: string }
+        rank: { type: integer }
+        period: { type: string, enum: [ '7d', '30d', '90d' ] }
+        name: { type: string }
+        imageUrl: { type: string, format: uri, nullable: true }
+        basePriceMinor: { type: integer }
+    LineItem:
+      type: object
+      required: [ itemId, qty ]
+      properties:
+        itemId: { type: string }
+        qty: { type: integer, minimum: 1 }
+        selectedOptions:
+          type: array
+          items: { type: string, description: Option/choice IDs }
+        priceMinor: { type: integer, nullable: true, description: Server-computed if omitted }
+        name: { type: string, readOnly: true }
+    Order:
+      type: object
+      required: [ id, lineItems, subtotalMinor, taxMinor, totalMinor, status, createdAt ]
+      properties:
+        id: { type: string, example: ord_456 }
+        userId: { type: string, nullable: true }
+        lineItems:
+          type: array
+          items: { $ref: '#/components/schemas/LineItem' }
+        subtotalMinor: { type: integer }
+        taxMinor: { type: integer }
+        tipMinor: { type: integer, nullable: true }
+        totalMinor: { type: integer }
+        currency: { type: string, example: USD }
+        status:
+          type: string
+          enum: [ draft, submitted, accepted, in_progress, ready, completed, canceled ]
+        createdAt: { type: string, format: date-time }
+        notes: { type: string, nullable: true }
+    QueueTicket:
+      type: object
+      required: [ id, status, position, estimatedWaitSeconds ]
+      properties:
+        id: { type: string, example: tkt_001 }
+        orderId: { type: string, nullable: true }
+        status: { type: string, enum: [ waiting, called, expired, canceled ] }
+        position: { type: integer }
+        estimatedWaitSeconds: { type: integer }
+        createdAt: { type: string, format: date-time }
+    CursorPage:
+      type: object
+      properties:
+        nextCursor: { type: string, nullable: true }
+        items:
+          type: array
+          items: { type: object }
+paths:
+  /v1/auth/register:
+    post:
+      tags: [ Auth ]
+      summary: Register a new user
+      operationId: register
+      security: []
+      parameters:
+        - $ref: '#/components/headers/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ email, password ]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                phone: { type: string, nullable: true }
+                firstName: { type: string, nullable: true }
+                lastName: { type: string, nullable: true }
+      responses:
+        '201':
+          description: Created
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+                  session: { $ref: '#/components/schemas/AuthSession' }
+        '400': { $ref: '#/components/responses/ProblemJson' }
+        '409': { $ref: '#/components/responses/ProblemJson' }
+  /v1/auth/login:
+    post:
+      tags: [ Auth ]
+      summary: Login and receive tokens
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ email, password ]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session: { $ref: '#/components/schemas/AuthSession' }
+        '401': { $ref: '#/components/responses/ProblemJson' }
+  /v1/auth/refresh:
+    post:
+      tags: [ Auth ]
+      summary: Refresh access token
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ refreshToken ]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401': { $ref: '#/components/responses/ProblemJson' }
+
+  /v1/menu:
+    get:
+      tags: [ Menu ]
+      summary: Full menu with categories and items
+      operationId: getMenu
+      parameters:
+        - $ref: '#/components/parameters/StoreIdParam'
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items: { $ref: '#/components/schemas/MenuCategory' }
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/MenuItem' }
+        '304': { $ref: '#/components/responses/NotModified' }
+  /v1/menu/items/{id}:
+    get:
+      tags: [ Menu ]
+      summary: Get a single menu item
+      operationId: getMenuItem
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MenuItem' }
+        '404': { $ref: '#/components/responses/ProblemJson' }
+
+  /v1/menu/popular:
+    get:
+      tags: [ Popular ]
+      summary: Most popular items
+      operationId: getPopular
+      parameters:
+        - $ref: '#/components/parameters/StoreIdParam'
+        - $ref: '#/components/parameters/PeriodParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  period: { type: string }
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/PopularItem' }
+        '304': { $ref: '#/components/responses/NotModified' }
+
+  /v1/queue/tickets:
+    post:
+      tags: [ Queue ]
+      summary: Join the queue (with order or party info)
+      operationId: createTicket
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderId: { type: string, nullable: true }
+                partySize: { type: integer, nullable: true, minimum: 1 }
+                name: { type: string, nullable: true }
+                phone: { type: string, nullable: true }
+              anyOf:
+                - required: [ orderId ]
+                - required: [ partySize ]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueueTicket' }
+        '409': { $ref: '#/components/responses/ProblemJson' }
+  /v1/queue/tickets/{id}:
+    get:
+      tags: [ Queue ]
+      summary: Get ticket status
+      operationId: getTicket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QueueTicket' }
+        '404': { $ref: '#/components/responses/ProblemJson' }
+
+  /v1/orders:
+    post:
+      tags: [ Orders ]
+      summary: Create an order draft and compute totals
+      operationId: createOrder
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/LineItem' }
+                tipMinor: { type: integer, nullable: true }
+                promoCode: { type: string, nullable: true }
+                notes: { type: string, nullable: true, maxLength: 500 }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order: { $ref: '#/components/schemas/Order' }
+        '400': { $ref: '#/components/responses/ProblemJson' }
+  /v1/orders/{id}/submit:
+    post:
+      tags: [ Orders ]
+      summary: Submit an order (locks items, triggers workflow)
+      operationId: submitOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payAtCounter: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order: { $ref: '#/components/schemas/Order' }
+                  ticket: { $ref: '#/components/schemas/QueueTicket' }
+        '409': { $ref: '#/components/responses/ProblemJson' }
+        '422': { $ref: '#/components/responses/ProblemJson' }
+  /v1/orders/{id}:
+    get:
+      tags: [ Orders ]
+      summary: Get order by ID
+      operationId: getOrder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '404': { $ref: '#/components/responses/ProblemJson' }
+
+  /v1/events:
+    get:
+      tags: [ Events ]
+      summary: Server-Sent Events stream for real-time updates
+      operationId: streamEvents
+      description: |
+        Streams order and queue updates to the UI using SSE. Client SHOULD reconnect with `Last-Event-ID` on disconnect.
+      responses:
+        '200':
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  id: evt_001\n
+                  event: order.updated\n
+                  data: {"orderId":"ord_456","status":"in_progress"}\n
+        '401': { $ref: '#/components/responses/ProblemJson' }

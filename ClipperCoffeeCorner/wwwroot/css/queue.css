@@ -1,0 +1,102 @@
+/* queue.css amendments incorporating inline styles from queue.html */
+
+.queue-card {
+    max-width: 800px;
+    width: 100%;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0 auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.queue-header {
+    background: var(--coffee-dark);
+    color: #fff;
+    padding: 1rem 0;
+}
+
+#userSummary h5 {
+    margin-bottom: 0.5rem;
+}
+
+#userSummary p {
+    margin-bottom: 0;
+    color: #6c757d;
+}
+
+.queue-body {
+    padding: 1rem;
+}
+
+.queue-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.5rem;
+}
+
+    .queue-table th {
+        background: var(--coffee-medium);
+        color: #fff;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .queue-table td {
+        font-size: 0.95rem;
+        padding: 0.7rem;
+        text-align: center;
+    }
+
+.queue-footer {
+    background: var(--coffee-cream);
+    padding: 1rem 0;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-new-order {
+    background: var(--coffee-medium);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    transition: background 0.25s;
+}
+
+    .btn-new-order:hover {
+        background: var(--coffee-dark);
+        color: #fff;
+    }
+
+/* Ready modal */
+#readyModal .modal-content {
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+#readyModal .text-success.display-4 {
+    font-size: 3rem;
+}
+
+#readyModal h4 {
+    margin-bottom: 0.5rem;
+}
+
+#readyModal p {
+    margin-bottom: 0;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .queue-table th, .queue-table td {
+        font-size: 0.85rem;
+    }
+}

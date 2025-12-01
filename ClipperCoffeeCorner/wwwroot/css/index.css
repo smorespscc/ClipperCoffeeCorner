@@ -1,0 +1,12 @@
+/* LOGIN PAGE CUSTOMIZATION
+   - Extends global coffee theme
+   - Can add page-specific tweaks
+*/
+
+.auth-card h2 {
+  letter-spacing: 1px;
+}
+
+.btn-coffee {
+  margin-top: 0.5rem;
+}
