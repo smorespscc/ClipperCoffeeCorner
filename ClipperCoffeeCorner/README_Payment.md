@@ -37,7 +37,7 @@ Checkout flow (runtime)
    - `currency` = `"USD"`.
 4. The service posts `/v2/online-checkout/payment-links` and returns the `payment_link.url`.
 5. Controller redirects user to the returned Square URL.
-6. Square redirects back to the `redirect_url` you supplied (commonly `Checkout/Success`, currently `Home/Index`).
+6. Square redirects back to the `redirect_url` you supplied (commonly `Checkout/Success`, currently `Home/Queue`).
 
 Webhook flow (recommended)
 - Typical route: `POST /api/webhook` handled by `WebhookController`.
