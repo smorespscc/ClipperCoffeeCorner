@@ -510,7 +510,7 @@ function updateModalFooterButtons() {
         applyBtn.style.display = 'inline-block';
     }
     
-    // If editing a saved order, change buttons to Cancel, Delete, Update
+    // If editing a saved order, hide Save Order button and change Apply to Update
     if (currentEditingSavedOrderId) {
         if (modalCancelBtn) {
             modalCancelBtn.textContent = 'Cancel';
@@ -519,18 +519,9 @@ function updateModalFooterButtons() {
             modalCancelBtn.onclick = null;
         }
         
+        // Hide the Save Order button when editing a saved order
         if (saveOrderBtn) {
-            saveOrderBtn.textContent = 'Delete';
-            saveOrderBtn.className = 'btn btn-danger';
-            saveOrderBtn.style.display = 'inline-block';
-            saveOrderBtn.onclick = (e) => {
-                e.preventDefault();
-                if (confirm('Are you sure you want to delete this saved order? This action cannot be undone.')) {
-                    deleteSavedOrder(currentEditingSavedOrderId);
-                    const modalInstance = bootstrap.Modal.getInstance(itemModalEl);
-                    if (modalInstance) modalInstance.hide();
-                }
-            };
+            saveOrderBtn.style.display = 'none';
         }
         
         if (applyBtn) {
@@ -1884,6 +1875,63 @@ function applySavedOrderDirectly(savedOrder) {
     showNotification(`"${savedOrder.name}" has been applied to your order!`, 'success');
 }
 
+// --- Apply Saved Order Directly (Silent - no notification) ---
+function applySavedOrderDirectlySilent(savedOrder) {
+    if (!savedOrder || !savedOrder.tabs) return;
+    
+    const selectedItems = getSelectedItems();
+    const appliedSavedOrders = getAppliedSavedOrders();
+    
+    // Add all tab instances from saved order to selected items
+    savedOrder.tabs.forEach(tabData => {
+        const itemObj = {
+            name: savedOrder.itemName,
+            type: savedOrder.itemType,
+            modifiers: tabData.modifiers || [],
+            specialRequests: tabData.specialRequests || '',
+            quantity: 1,
+            fromSavedOrder: savedOrder.id // Mark as from saved order
+        };
+        
+        // Check if an identical item already exists
+        const identicalIndex = selectedItems.findIndex(item => areItemsIdentical(item, itemObj));
+        
+        if (identicalIndex !== -1) {
+            // Item is identical - merge by increasing quantity
+            selectedItems[identicalIndex].quantity = (selectedItems[identicalIndex].quantity || 1) + 1;
+        } else {
+            // Item is different - add as new entry
+            selectedItems.push(itemObj);
+        }
+    });
+    
+    // Track this saved order as applied
+    const existingAppliedIndex = appliedSavedOrders.findIndex(applied => applied.id === savedOrder.id);
+    const totalQuantity = savedOrder.tabs.length;
+    
+    if (existingAppliedIndex !== -1) {
+        appliedSavedOrders[existingAppliedIndex].totalQuantity += totalQuantity;
+    } else {
+        appliedSavedOrders.push({
+            id: savedOrder.id,
+            name: savedOrder.name,
+            itemName: savedOrder.itemName,
+            itemType: savedOrder.itemType,
+            totalQuantity: totalQuantity,
+            appliedAt: Date.now()
+        });
+    }
+    
+    saveSelectedItems(selectedItems);
+    saveAppliedSavedOrders(appliedSavedOrders);
+    
+    // Update visual indicators
+    restoreSelectedItems();
+    populateSavedOrdersCarousel();
+    
+    // No notification - user already confirmed via dialog
+}
+
 // --- Remove Applied Saved Order ---
 function removeAppliedSavedOrder(savedOrderId) {
     const selectedItems = getSelectedItems();
@@ -1936,14 +1984,15 @@ function loadSavedOrderFromCarousel(savedOrder, isEditMode = false) {
     const isAlreadyApplied = appliedSavedOrders.some(applied => applied.id === savedOrder.id);
     
     if (isAlreadyApplied) {
-        // Show confirmation dialog for already applied orders
+        // Show confirmation dialog for already applied orders - only once
         if (confirm(`"${savedOrder.name}" has already been added to your order.\n\nWould you like to add it again?`)) {
-            applySavedOrderDirectly(savedOrder);
+            // Apply directly without showing notification since user already confirmed
+            applySavedOrderDirectlySilent(savedOrder);
         }
         return;
     }
     
-    // Otherwise, apply directly without confirmation
+    // Otherwise, apply directly with notification
     applySavedOrderDirectly(savedOrder);
 }
 

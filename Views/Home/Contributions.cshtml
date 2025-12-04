@@ -19,9 +19,16 @@
             border-radius: 15px;
             padding: 3rem;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            max-width: 600px;
+            max-width: 800px;
             width: 100%;
             text-align: center;
+        }
+        
+        @@media (max-width: 768px) {
+            .contributors-card {
+                padding: 2rem 1.5rem;
+                max-width: 95%;
+            }
         }
         
         .contributors-title {
@@ -31,6 +38,12 @@
             font-size: 2.5rem;
         }
         
+        @@media (max-width: 768px) {
+            .contributors-title {
+                font-size: 1.8rem;
+            }
+        }
+        
         .contributor-list {
             list-style: none;
             padding: 0;
@@ -38,12 +51,19 @@
         }
         
         .contributor-item {
-            padding: 0.75rem 0;
+            padding: 0.75rem 0.5rem;
             font-size: 1.1rem;
             color: #555;
             border-bottom: 1px solid #eee;
             cursor: pointer;
             transition: background-color 0.2s ease;
+        }
+        
+        @@media (max-width: 768px) {
+            .contributor-item {
+                font-size: 0.95rem;
+                padding: 0.6rem 0.25rem;
+            }
         }
         
         .contributor-item:hover {
@@ -58,6 +78,21 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 1rem;
+        }
+        
+        .contributor-name span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            text-align: left;
+        }
+        
+        @@media (max-width: 768px) {
+            .contributor-name {
+                gap: 0.5rem;
+            }
         }
         
         .contributor-details {
@@ -77,6 +112,8 @@
         
         .dropdown-arrow {
             transition: transform 0.2s ease;
+            flex-shrink: 0;
+            min-width: 20px;
         }
         
         .dropdown-arrow.rotated {
@@ -100,118 +137,159 @@
 
 <div class="contributors-container">
     <div class="contributors-card">
-        <h1 class="contributors-title">Special Thanks</h1>
-        <p class="text-muted mb-4">This coffee ordering system was made possible by the following contributors:</p>
+        <h1 class="contributors-title">Project Contributors</h1>
+        <p class="text-muted mb-4">This coffee ordering system was built by our software engineering class team:</p>
         
         <ul class="contributor-list">
+            <!-- Team 1: Database -->
             <li class="contributor-item" onclick="toggleDetails(this)">
                 <div class="contributor-name">
-                    <span>Shruti More - Software Engineering Professor</span>
+                    <span>Kai Gillespie — Database Team</span>
                     <i class="bi bi-chevron-down dropdown-arrow"></i>
                 </div>
                 <div class="contributor-details">
                     <strong>Contributions:</strong><br>
-                    • Architected the overall system design and database structure<br>
-                    • Implemented core authentication and user management features<br>
-                    • Led code reviews and established development best practices<br>
-                    • Mentored junior developers throughout the project
+                    • Database schema design<br>
+                    • Project coordination and planning
                 </div>
             </li>
             <li class="contributor-item" onclick="toggleDetails(this)">
                 <div class="contributor-name">
-                    <span>Kai Gillespie - Database Schema and Project Coordination</span>
+                    <span>Marissa Stout — Database Team</span>
                     <i class="bi bi-chevron-down dropdown-arrow"></i>
                 </div>
                 <div class="contributor-details">
                     <strong>Contributions:</strong><br>
-                    • Created wireframes and mockups for all user interfaces<br>
-                    • Designed the coffee-themed visual identity and color scheme<br>
-                    • Conducted user research and usability testing sessions<br>
-                    • Optimized user flows for mobile and desktop experiences
+                    • Database setup and administration<br>
+                    • Database infrastructure management
+                </div>
+            </li>
+            
+            <!-- Team 2: API Controllers -->
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Thomas Baker — API Controllers Team</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Created the API sheet<br>
+                    • DTOs development<br>
+                    • Test classes implementation
                 </div>
             </li>
             <li class="contributor-item" onclick="toggleDetails(this)">
                 <div class="contributor-name">
-                    <span>Marissa Stout - Database Setup and Admin</span>
+                    <span>Xin Ding — API Controllers Team</span>
                     <i class="bi bi-chevron-down dropdown-arrow"></i>
                 </div>
                 <div class="contributor-details">
                     <strong>Contributions:</strong><br>
-                    • Developed RESTful APIs for order management and processing<br>
-                    • Implemented real-time queue updates and notifications<br>
-                    • Built secure payment processing integration<br>
-                    • Optimized database queries for improved performance
+                    • Built backend models<br>
+                    • API controllers development
+                </div>
+            </li>
+            
+            <!-- Team 3: UI -->
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Jordan McNair — UI Team</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • User interface development<br>
+                    • Frontend implementation
                 </div>
             </li>
             <li class="contributor-item" onclick="toggleDetails(this)">
                 <div class="contributor-name">
-                    <span>Brandon Reeder - Square Payment Integration</span>
+                    <span>Nils Julnes — UI Team</span>
                     <i class="bi bi-chevron-down dropdown-arrow"></i>
                 </div>
                 <div class="contributor-details">
                     <strong>Contributions:</strong><br>
-                    • Developed comprehensive test plans and test cases<br>
-                    • Performed manual and automated testing across all features<br>
-                    • Identified and documented bugs and usability issues<br>
-                    • Ensured accessibility compliance and cross-browser compatibility
+                    • Backend database design<br>
+                    • Layer communication architecture<br>
+                    • API design and implementation<br>
+                    • Process diagrams and documentation<br>
+                    • UI development<br>
+                    • AI prompt consulting
                 </div>
             </li>
             <li class="contributor-item" onclick="toggleDetails(this)">
                 <div class="contributor-name">
-                    <span>Krysta Gallegos - Customer Model</span>
+                    <span>Taran Triggs — UI Team</span>
                     <i class="bi bi-chevron-down dropdown-arrow"></i>
                 </div>
                 <div class="contributor-details">
                     <strong>Contributions:</strong><br>
-                    • Designed normalized database schema for scalability<br>
-                    • Implemented data migration scripts and backup strategies<br>
-                    • Optimized database indexes for query performance<br>
-                    • Established data security and privacy protocols
+                    • Frontend admin interface development<br>
+                    • User interface components
+                </div>
+            </li>
+            
+            <!-- Team 4: Payments -->
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Brandon Reeder — Payments Team</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Square payment integration<br>
+                    • Payment processing implementation
                 </div>
             </li>
             <li class="contributor-item" onclick="toggleDetails(this)">
                 <div class="contributor-name">
-                    <span>Jordan McNair - Front-End User Interface</span>
+                    <span>Krysta Gallegos — Payments Team</span>
                     <i class="bi bi-chevron-down dropdown-arrow"></i>
                 </div>
                 <div class="contributor-details">
                     <strong>Contributions:</strong><br>
-                    • Coordinated project timeline and milestone deliverables<br>
-                    • Facilitated daily standups and sprint planning meetings<br>
-                    • Managed stakeholder communication and requirements gathering<br>
-                    • Ensured project stayed within budget and scope constraints
+                    • Customer model development<br>
+                    • Order model collaboration<br>
+                    • Payment data structures
+                </div>
+            </li>
+            
+            <!-- Team 5: Notifications -->
+            <li class="contributor-item" onclick="toggleDetails(this)">
+                <div class="contributor-name">
+                    <span>Kyle Geissinger — Notifications Team</span>
+                    <i class="bi bi-chevron-down dropdown-arrow"></i>
+                </div>
+                <div class="contributor-details">
+                    <strong>Contributions:</strong><br>
+                    • Wait time estimation feature<br>
+                    • Queue time calculations<br>
+                    • Notification timing logic
                 </div>
             </li>
             <li class="contributor-item" onclick="toggleDetails(this)">
                 <div class="contributor-name">
-                    <span>Taran Triggs - Frontend Admin Interface</span>
+                    <span>Mattox Marsh — Notifications Team</span>
                     <i class="bi bi-chevron-down dropdown-arrow"></i>
                 </div>
                 <div class="contributor-details">
                     <strong>Contributions:</strong><br>
-                    • Set up CI/CD pipelines for automated deployment<br>
-                    • Configured cloud infrastructure and monitoring systems<br>
-                    • Implemented security scanning and vulnerability assessments<br>
-                    • Managed production deployments and system maintenance
-                </div>
-            </li>
-            <li class="contributor-item" onclick="toggleDetails(this)">
-                <div class="contributor-name">
-                    <span>Rachel Green - Frontend Developer</span>
-                    <i class="bi bi-chevron-down dropdown-arrow"></i>
-                </div>
-                <div class="contributor-details">
-                    <strong>Contributions:</strong><br>
-                    • Implemented responsive user interfaces using modern frameworks<br>
-                    • Developed interactive components and animations<br>
-                    • Integrated frontend with backend APIs and services<br>
-                    • Optimized application performance and loading times
+                    • SMS and email notifications<br>
+                    • API development and integration<br>
+                    • Notification delivery system
                 </div>
             </li>
         </ul>
         
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid #eee;">
+            <h3 style="color: #8B4513; font-size: 1.5rem; margin-bottom: 1rem;">Special Thanks</h3>
+            <p class="text-muted">
+                Special thanks to <strong>Professor Shruti More</strong> for guiding us in this endeavor; without her, applying these I can software engineering principles in a real-world setting would not have been possible.
+            </p>
+        </div>
+        
         <p class="text-muted mt-4">
-            <small>Thank you for making our coffee corner a better place!</small>
+            <small>Thank you to everyone who contributed to making Clipper Coffee Corner a success!</small>
         </p>
         
         <a href="javascript:history.back()" class="back-link">

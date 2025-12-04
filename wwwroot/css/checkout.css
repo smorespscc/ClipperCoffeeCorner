@@ -1,9 +1,10 @@
 /* checkout.css amendments incorporating inline styles from checkout.html */
 
 .checkout-card {
-    max-width: 800px;
+    max-width: 1200px;
     background-color: #fff;
     border-radius: 8px;
+    width: 100%;
 }
 
 .checkout-header {
@@ -59,4 +60,45 @@
 
 #clearAllBtn {
     font-size: 0.875rem;
+}
+
+/* Ensure table is responsive and doesn't overflow */
+.checkout-body .table {
+    width: 100%;
+    table-layout: auto;
+}
+
+.checkout-body .table-responsive {
+    overflow-x: auto;
+}
+
+/* Adjust column widths for better content fit */
+.checkout-body .table th:nth-child(1),
+.checkout-body .table td:nth-child(1) {
+    min-width: 120px;
+}
+
+.checkout-body .table th:nth-child(2),
+.checkout-body .table td:nth-child(2) {
+    min-width: 80px;
+}
+
+.checkout-body .table th:nth-child(3),
+.checkout-body .table td:nth-child(3) {
+    min-width: 150px;
+}
+
+.checkout-body .table th:nth-child(4),
+.checkout-body .table td:nth-child(4) {
+    min-width: 150px;
+}
+
+.checkout-body .table th:nth-child(5),
+.checkout-body .table td:nth-child(5) {
+    min-width: 80px;
+}
+
+.checkout-body .table th:nth-child(6),
+.checkout-body .table td:nth-child(6) {
+    min-width: 80px;
 }
