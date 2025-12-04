@@ -119,7 +119,7 @@ Added test-payment.html to quickly call the API from the browser.
 
 Wrote and ran manual API tests using PowerShell and browser (for example Invoke-Safe script).
 
-Thomas [Last Name]
+Thomas Baker
 
 Helped design the API structure and contract with other teams (API sheet).
 
