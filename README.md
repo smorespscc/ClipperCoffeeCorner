@@ -62,6 +62,11 @@ Returns JSON like:
 
 Support code
 
+ClipperCoffeeCorner.Tests project using MSTest.
+Tests for Orders, Menu, Payments, Users, Password, Home, and Queue controllers.
+Uses an in-memory AppDbContext (TestDbHelpers.GetInMemoryDbContext()) so tests exercise real EF Core logic without needing SQL Server.
+Verifies both “happy path” behavior and error cases (404 NotFound, 400 BadRequest, etc.) and that DTOs like OrderSummaryDto, OrderItemDetailsDto, PopularItemDto, PaymentDto, and UserResponse are returned.
+
 Models for orders, order items, menu items, combinations, option groups/values, users, passwords, etc.
 
 DTOs under Models/Dtos for clean responses to other teams.
@@ -87,6 +92,17 @@ For payments we wanted a simple, safe flow:
 Our API does not store credit cards.
 
 We only create a Square-hosted checkout link and send the URL back to the UI. The real payment happens on Square.
+
+To keep the integration layer reliable, we added a dedicated MSTest project (ClipperCoffeeCorner.Tests).
+Each test gets its own in-memory EF Core database via TestDbHelpers.GetInMemoryDbContext().
+Controller tests call the real actions (no mocks) and assert on HTTP result types and DTO shapes.
+Examples:
+OrdersControllerTests – creating orders, status updates, order item details (options + totals), and popular items aggregation.
+MenuControllerTests – categories and item listing with active filters.
+PaymentsControllerTests – order existence checks and returned PaymentDto.
+UsersControllerTests – registration and login flow using hashed passwords.
+Simple smoke tests for MVC controllers: HomeControllerTests, QueueControllerTests, PasswordControllerTests.
+MSTestSettings.cs enables method-level parallelization so tests run quickly.
 
 3. What each person worked on
 
@@ -344,6 +360,25 @@ Enter an orderId that exists.
 Click “Create Payment Link”.
 
 The page will show the JSON response from /api/checkout/{orderId}/payment-link.
+
+7.4 Run automated tests
+
+In Visual Studio, open Test → Test Explorer.
+
+Make sure the startup project builds (ClipperCoffeeCorner).
+
+Run All Tests.
+
+The tests in ClipperCoffeeCorner.Tests will:
+
+Spin up an in-memory AppDbContext per test.
+
+Exercise controllers like OrdersController, MenuController, PaymentsController, and UsersController.
+
+Assert on HTTP results (Ok, Created, NotFound, BadRequest, NoContent) and DTO shapes.
+
+You can also run them from the command line in the solution folder:
+dotnet test
 
 8. Resources for future students
 
