@@ -44,33 +44,49 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly Dictionary<string, decimal> BasePrices = new Dictionary<string, decimal>
         {
-            // Drinks
-            { "Cappuccino", 4.50m },
-            { "Vanilla Latte", 4.95m },
-            { "House Brew", 3.50m },
-            { "Chai Tea Latte", 4.75m },
-            { "Iced Mocha", 5.25m },
-            { "Double Espresso", 3.25m },
-            { "Espresso", 2.75m },
-            { "Americano", 3.75m },
-            { "Macchiato", 3.95m },
-            { "Mocha", 4.95m },
-            { "Flat White", 4.25m },
-            { "Cortado", 3.50m },
+            // Hot Coffee Drinks - Lattes
+            { "Chai Latte", 4.75m },
+            { "Matcha Latte", 4.95m },
+            { "Regular Latte", 4.50m },
             
-            // Food
-            { "Breakfast Sandwich", 5.50m },
-            { "Bagel & Cream Cheese", 3.25m },
-            { "Pancake Stack", 6.50m },
-            { "Cheese Omelette", 6.00m },
-            { "Butter Croissant", 2.75m },
-            { "Blueberry Muffin", 2.95m },
-            { "French Toast", 6.75m },
+            // Hot Coffee - Americano & Espresso
+            { "Americano", 3.75m },
+            { "Espresso", 2.75m },
+            
+            // Hot Coffee - Mocha
+            { "Plain Mocha", 4.95m },
+            { "White Mocha", 5.25m },
+            
+            // Hot Coffee - Drip
+            { "Drip Coffee", 3.50m },
+            
+            // Cold Coffee - Lattes
+            { "Iced Latte", 4.75m },
+            { "Iced Chai Latte", 4.95m },
+            { "Iced Matcha Latte", 5.15m },
+            
+            // Cold - Blended & Other
+            { "Blended Coffee", 5.50m },
+            { "Juice", 3.95m },
+            { "Water", 1.50m },
+            
+            // Breakfast Food Items
+            { "Breakfast Sandwich", 6.50m },
+            { "Bagel with Cream Cheese", 4.25m },
+            { "Croissant", 3.75m },
+            { "Blueberry Muffin", 3.50m },
+            { "Pancakes", 7.50m },
+            { "French Toast", 7.95m },
+            { "Breakfast Burrito", 8.50m },
             { "Avocado Toast", 7.25m },
-            { "Breakfast Burrito", 7.50m },
-            { "Belgian Waffle", 6.95m },
-            { "Eggs Benedict", 8.50m },
-            { "Breakfast Bowl", 7.95m }
+            
+            // Lunch Food Items
+            { "Turkey Sandwich", 8.95m },
+            { "Chicken Wrap", 9.50m },
+            { "Caesar Salad", 8.25m },
+            { "Soup of the Day", 6.50m },
+            { "Grilled Cheese", 6.95m },
+            { "Club Sandwich", 9.95m }
         };
 
         // ==================== MODIFIER PRICES ====================
@@ -81,46 +97,43 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly Dictionary<string, decimal> ModifierPrices = new Dictionary<string, decimal>
         {
-            // Drink modifiers with cost
-            { "Extra Shot", 0.75m },
+            // Milk alternatives (non-dairy) - with cost
+            { "Almond Milk", 0.50m },
+            { "Cashew Milk", 0.50m },
             { "Oat Milk", 0.50m },
-            { "Oat", 0.50m },
-            { "Almond", 0.50m },
-            { "Soy", 0.50m },
-            { "Whip Cream", 0.25m },
-            { "Whip", 0.25m },
+            { "Soy Milk", 0.50m },
+            { "Coconut Milk", 0.50m },
             
-            // Free modifiers (no cost)
+            // Dairy options (regular) - with cost
+            { "Breve", 0.75m },  // Half and half
+            { "Heavy Cream", 0.75m },
+            { "Nonfat Milk", 0.00m },
+            { "Whole Milk", 0.00m },
+            
+            // Espresso shots - with cost
+            { "Extra Shot", 0.75m },
+            { "1 Shot", 0.00m },
+            { "2 Shots", 0.75m },
+            { "3 Shots", 1.50m },
+            { "4 Shots", 2.25m },
+            { "5 Shots", 3.00m },
+            { "6 Shots", 3.75m },
+            
+            // Size options - with cost
+            { "Small", 0.00m },
+            { "Medium", 0.50m },
+            { "Large", 1.00m },
+            
+            // Ice options - free
+            { "No Ice", 0.00m },
+            { "Light Ice", 0.00m },
+            { "Regular Ice", 0.00m },
+            { "Extra Ice", 0.00m },
+            
+            // Temperature - free
             { "Hot", 0.00m },
             { "Iced", 0.00m },
-            { "Dairy", 0.00m },
-            { "Vanilla", 0.00m },
-            { "Mint", 0.00m },
-            { "Cinnamon", 0.00m },
-            { "Hazelnut", 0.00m },
-            { "Caramel", 0.00m },
-            { "Decaf", 0.00m },
-            { "Sugar Free", 0.00m },
-            { "Caffeine Free", 0.00m },
-            
-            // Food modifiers (all free)
-            { "Well Done", 0.00m },
-            { "Medium", 0.00m },
-            { "Light", 0.00m },
-            { "Hash Browns", 0.00m },
-            { "Fresh Fruit", 0.00m },
-            { "Toast", 0.00m },
-            { "Extra Cheese", 0.00m },
-            { "Bacon", 0.00m },
-            { "Avocado", 0.00m },
-            { "Sausage", 0.00m },
-            { "Gluten Free", 0.00m },
-            { "Vegetarian", 0.00m },
-            { "Vegan", 0.00m },
-            { "No Dairy", 0.00m },
-            { "No Onions", 0.00m },
-            { "No Tomatoes", 0.00m },
-            { "Extra Crispy", 0.00m }
+            { "Blended", 0.00m }
         };
 
         // ==================== MENU ITEM AVAILABILITY ====================
@@ -130,16 +143,18 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly HashSet<string> BreakfastItems = new HashSet<string>
         {
-            // Drinks
-            "Cappuccino", "Vanilla Latte", "House Brew", "Chai Tea Latte", 
-            "Espresso", "Americano", "Macchiato", "Flat White", "Cortado", 
-            "Double Espresso",
+            // Hot Coffee Drinks
+            "Chai Latte", "Matcha Latte", "Regular Latte", "Americano", "Espresso",
+            "Plain Mocha", "White Mocha", "Drip Coffee",
             
-            // Food
-            "Butter Croissant", "Blueberry Muffin", "Pancake Stack", 
-            "Cheese Omelette", "French Toast", "Breakfast Sandwich", 
-            "Bagel & Cream Cheese", "Belgian Waffle", "Eggs Benedict", 
-            "Breakfast Bowl", "Breakfast Burrito"
+            // Cold Drinks
+            "Iced Latte", "Iced Chai Latte", "Iced Matcha Latte", 
+            "Blended Coffee", "Juice", "Water",
+            
+            // Breakfast Food
+            "Breakfast Sandwich", "Bagel with Cream Cheese", "Croissant", 
+            "Blueberry Muffin", "Pancakes", "French Toast", 
+            "Breakfast Burrito", "Avocado Toast"
         };
 
         /// <summary>
@@ -147,11 +162,17 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly HashSet<string> LunchItems = new HashSet<string>
         {
-            // Drinks
-            "Iced Mocha", "Chai Tea Latte", "House Brew", "Americano", "Espresso",
+            // Hot Coffee Drinks
+            "Chai Latte", "Matcha Latte", "Regular Latte", "Americano", "Espresso",
+            "Plain Mocha", "White Mocha", "Drip Coffee",
             
-            // Food
-            "Avocado Toast", "Breakfast Sandwich", "Bagel & Cream Cheese"
+            // Cold Drinks
+            "Iced Latte", "Iced Chai Latte", "Iced Matcha Latte", 
+            "Blended Coffee", "Juice", "Water",
+            
+            // Lunch Food
+            "Turkey Sandwich", "Chicken Wrap", "Caesar Salad", 
+            "Soup of the Day", "Grilled Cheese", "Club Sandwich"
         };
 
         // ==================== MENU CATEGORIES ====================
@@ -161,7 +182,7 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly HashSet<string> TrendingItems = new HashSet<string>
         {
-            "Iced Mocha", "Double Espresso"
+            "Iced Matcha Latte", "Blended Coffee"
         };
 
         /// <summary>
@@ -169,7 +190,7 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly HashSet<string> SpecialItems = new HashSet<string>
         {
-            "Breakfast Sandwich", "Bagel & Cream Cheese"
+            "Chai Latte", "Drip Coffee"
         };
 
         // ==================== DRINK MODIFIERS ====================
@@ -180,10 +201,12 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly Dictionary<string, List<string>> DrinkModifierGroups = new Dictionary<string, List<string>>
         {
-            { "Temperature", new List<string> { "Hot", "Iced" } },
-            { "Milk", new List<string> { "Dairy", "Oat", "Almond", "Soy" } },
-            { "Flavor", new List<string> { "Vanilla", "Mint", "Cinnamon", "Hazelnut", "Caramel" } },
-            { "Extras", new List<string> { "Whip Cream", "Extra Shot", "Decaf", "Sugar Free", "Caffeine Free" } }
+            { "Temperature", new List<string> { "Hot", "Iced", "Blended" } },
+            { "Dairy", new List<string> { "Breve", "Heavy Cream", "Nonfat Milk", "Whole Milk" } },
+            { "Non-Dairy", new List<string> { "Almond Milk", "Cashew Milk", "Oat Milk", "Soy Milk", "Coconut Milk" } },
+            { "Espresso Shots", new List<string> { "1 Shot", "2 Shots", "3 Shots", "4 Shots", "5 Shots", "6 Shots" } },
+            { "Size", new List<string> { "Small", "Medium", "Large" } },
+            { "Ice", new List<string> { "No Ice", "Light Ice", "Regular Ice", "Extra Ice" } }
         };
 
         /// <summary>
@@ -191,9 +214,12 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly List<string> AllDrinkModifiers = new List<string>
         {
-            "Hot", "Iced", "Dairy", "Oat", "Almond", "Soy", "Vanilla", "Mint", 
-            "Cinnamon", "Hazelnut", "Caramel", "Whip Cream", "Extra Shot", 
-            "Decaf", "Sugar Free", "Caffeine Free"
+            "Hot", "Iced", "Blended",
+            "Breve", "Heavy Cream", "Nonfat Milk", "Whole Milk",
+            "Almond Milk", "Cashew Milk", "Oat Milk", "Soy Milk", "Coconut Milk",
+            "1 Shot", "2 Shots", "3 Shots", "4 Shots", "5 Shots", "6 Shots",
+            "Small", "Medium", "Large",
+            "No Ice", "Light Ice", "Regular Ice", "Extra Ice"
         };
 
         // ==================== FOOD MODIFIERS ====================
@@ -204,10 +230,7 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly Dictionary<string, List<string>> FoodModifierGroups = new Dictionary<string, List<string>>
         {
-            { "Cooking", new List<string> { "Well Done", "Medium", "Light", "Extra Crispy" } },
-            { "Sides", new List<string> { "Hash Browns", "Fresh Fruit", "Toast" } },
-            { "Add-ons", new List<string> { "Extra Cheese", "Bacon", "Avocado", "Sausage" } },
-            { "Dietary", new List<string> { "Gluten Free", "Vegetarian", "Vegan", "No Dairy", "No Onions", "No Tomatoes" } }
+            // No food items in current menu
         };
 
         /// <summary>
@@ -215,9 +238,7 @@ namespace ClipperCoffeeCorner.Services.Configuration
         /// </summary>
         public static readonly List<string> AllFoodModifiers = new List<string>
         {
-            "Well Done", "Medium", "Light", "Hash Browns", "Fresh Fruit", "Toast",
-            "Extra Cheese", "Bacon", "Avocado", "Sausage", "Gluten Free", 
-            "Vegetarian", "Vegan", "No Dairy", "No Onions", "No Tomatoes", "Extra Crispy"
+            // No food items in current menu
         };
 
         // ==================== STAFF DISCOUNT ====================
