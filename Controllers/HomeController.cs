@@ -135,6 +135,11 @@ namespace ClipperCoffeeCorner.Controllers
             return View();
         }
 
+        public IActionResult MenuPreview()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

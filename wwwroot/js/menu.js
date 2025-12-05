@@ -57,16 +57,30 @@
     const servingHours = document.getElementById('servingHours');
     const viewingModeBanner = document.getElementById('viewingModeBanner');
     const specialRequestsSection = document.querySelector('.row.gx-3.gy-3.mb-2:last-child');
-    const menuFooter = document.querySelector('.menu-footer');
+    const regularMenuFooter = document.getElementById('regularMenuFooter');
+    const viewingModeFooter = document.getElementById('viewingModeFooter');
     
     if (isViewingMode) {
         // Show viewing mode banner
         viewingModeBanner.style.display = 'block';
         servingStatus.textContent = 'Viewing';
         
-        // Hide special requests and footer buttons
+        // Hide special requests and regular footer buttons
         if (specialRequestsSection) specialRequestsSection.style.display = 'none';
-        if (menuFooter) menuFooter.style.display = 'none';
+        if (regularMenuFooter) {
+            regularMenuFooter.classList.remove('d-flex');
+            regularMenuFooter.style.display = 'none';
+        }
+        
+        // Show viewing mode footer with Return to Login button
+        if (viewingModeFooter) {
+            viewingModeFooter.classList.add('d-flex');
+            viewingModeFooter.style.display = 'flex';
+        }
+        
+        // Hide Recent Orders and Saved Orders sections
+        const recentOrdersRow = document.querySelector('.row.gx-3.gy-3.mb-2:first-child');
+        if (recentOrdersRow) recentOrdersRow.style.display = 'none';
     } else {
         servingStatus.textContent = 'Currently Serving';
     }
@@ -341,7 +355,11 @@
     
     // --- Load saved order ---
     function loadSavedOrder(savedOrder) {
-        if (!savedOrder || !savedOrder.tabs) return;
+        if (!savedOrder || !savedOrder.tabs) {
+            // No saved order data, start fresh
+            initializeTabs();
+            return;
+        }
         
         // Set current item info
         currentItemName = savedOrder.itemName;
@@ -356,14 +374,15 @@
             foodOptions.style.display = 'none';
         }
         
-        // Recreate tab instances from saved data
+        // Recreate tab instances from saved data ONLY - deep copy to avoid reference issues
         tabInstances = [];
         tabIdCounter = 0;
         
         savedOrder.tabs.forEach(tabData => {
             tabInstances.push({
                 id: `tab-${++tabIdCounter}`,
-                modifiers: [...(tabData.modifiers || [])],
+                // Deep copy modifiers from saved order ONLY
+                modifiers: Array.isArray(tabData.modifiers) ? [...tabData.modifiers] : [],
                 specialRequests: tabData.specialRequests || ''
             });
         });
@@ -372,7 +391,7 @@
             activeTabId = tabInstances[0].id;
             renderTabs();
             
-            // Load first tab state
+            // Load first tab state from saved order data ONLY
             setTimeout(() => {
                 if (activeTabId) {
                     const firstTab = tabInstances.find(t => t.id === activeTabId);
@@ -383,6 +402,7 @@
                                 tab.classList.toggle('active', tab.dataset.tabId === activeTabId);
                             });
                         }
+                        // Load tab state from saved order data ONLY
                         loadTabState(firstTab);
                     }
                 }
@@ -400,7 +420,11 @@
             item.name === currentItemName && item.type === currentItemType
         );
         
-        if (!matchingItem) return;
+        if (!matchingItem) {
+            // No matching item found, start fresh
+            initializeTabs();
+            return;
+        }
         
         // Show/hide appropriate options based on item type
         if (currentItemType === 'food') {
@@ -411,7 +435,7 @@
             foodOptions.style.display = 'none';
         }
         
-        // Create tabs based on quantity
+        // Create tabs based on quantity - use ONLY the data from the recent order
         tabInstances = [];
         tabIdCounter = 0;
         
@@ -419,6 +443,7 @@
         for (let i = 0; i < quantity; i++) {
             tabInstances.push({
                 id: `tab-${++tabIdCounter}`,
+                // Deep copy modifiers from recent order ONLY
                 modifiers: Array.isArray(matchingItem.modifiers) ? [...matchingItem.modifiers] : [],
                 specialRequests: matchingItem.specialRequests || ''
             });
@@ -437,6 +462,7 @@
                                 tab.classList.toggle('active', tab.dataset.tabId === activeTabId);
                             });
                         }
+                        // Load tab state from recent order data ONLY
                         loadTabState(firstTab);
                     }
                 }
@@ -484,24 +510,27 @@ function showNotification(message, type = 'info') {
 function updateModalFooterButtons() {
     const modalFooter = itemModalEl.querySelector('.modal-footer');
     const modalCancelBtn = modalFooter.querySelector('.btn-cancel');
+    const deleteOrderBtn = document.getElementById('deleteOrderBtn');
     const saveOrderBtn = document.getElementById('saveOrderBtn');
     const applyBtn = document.getElementById('applyModifiers');
     
     // Reset to default state first
     if (modalCancelBtn) {
         modalCancelBtn.textContent = 'Cancel';
-        modalCancelBtn.className = 'btn btn-secondary';
+        modalCancelBtn.className = 'btn btn-secondary btn-cancel';
         modalCancelBtn.onclick = null;
         modalCancelBtn.setAttribute('data-bs-dismiss', 'modal');
+    }
+    
+    if (deleteOrderBtn) {
+        deleteOrderBtn.style.display = 'none';
+        deleteOrderBtn.className = 'btn btn-danger';
     }
     
     if (saveOrderBtn) {
         saveOrderBtn.textContent = 'Save Order';
         saveOrderBtn.className = 'btn btn-secondary';
         saveOrderBtn.style.display = 'inline-block';
-        saveOrderBtn.onclick = () => {
-            saveCurrentOrder();
-        };
     }
     
     if (applyBtn) {
@@ -510,13 +539,20 @@ function updateModalFooterButtons() {
         applyBtn.style.display = 'inline-block';
     }
     
-    // If editing a saved order, hide Save Order button and change Apply to Update
+    // If editing a saved order, show Delete Order button and change Apply to Update
     if (currentEditingSavedOrderId) {
         if (modalCancelBtn) {
             modalCancelBtn.textContent = 'Cancel';
-            modalCancelBtn.className = 'btn btn-secondary';
+            modalCancelBtn.className = 'btn btn-secondary btn-cancel';
             modalCancelBtn.setAttribute('data-bs-dismiss', 'modal');
             modalCancelBtn.onclick = null;
+        }
+        
+        // Show Delete Order button when editing a saved order (red button)
+        if (deleteOrderBtn) {
+            deleteOrderBtn.style.display = 'inline-block';
+            deleteOrderBtn.className = 'btn btn-danger';
+            deleteOrderBtn.textContent = 'Delete Order';
         }
         
         // Hide the Save Order button when editing a saved order
@@ -524,6 +560,7 @@ function updateModalFooterButtons() {
             saveOrderBtn.style.display = 'none';
         }
         
+        // Change Apply to Update (blue button)
         if (applyBtn) {
             applyBtn.textContent = 'Update';
             applyBtn.className = 'btn btn-primary';
@@ -893,7 +930,7 @@ itemModalEl.addEventListener('show.bs.modal', (event) => {
         isLoadingFromSavedOrRecent = trigger.classList.contains('saved-order-item') || 
                                       trigger.classList.contains('recent-order-item');
         
-        // Check if this item is already selected (any variation)
+        // Check if this item is already selected (any variation) - ONLY for normal menu items
         wasAlreadySelected = hasItemWithSameNameAndType(currentItemName, currentItemType) && !isLoadingFromSavedOrRecent;
         
         // Update modal title
@@ -921,9 +958,6 @@ itemModalEl.addEventListener('show.bs.modal', (event) => {
         }
     }
 
-    // Update modal footer buttons based on context
-    updateModalFooterButtons();
-
     // Hide carousel arrows
     [...document.getElementsByClassName('carousel-control-prev')].forEach(btn => btn.style.display = 'none');
     [...document.getElementsByClassName('carousel-control-next')].forEach(btn => btn.style.display = 'none');
@@ -934,9 +968,15 @@ itemModalEl.addEventListener('show.bs.modal', (event) => {
         currentEditingSavedOrderId = savedOrder.id;
         window.pendingSavedOrder = null;
         
+        // Update modal footer buttons AFTER setting currentEditingSavedOrderId
+        updateModalFooterButtons();
+        
         loadSavedOrder(savedOrder);
         return;
     }
+    
+    // Update modal footer buttons based on context (for non-editing cases)
+    updateModalFooterButtons();
     
     // Check if there's a pending recent order to load
     if (window.pendingRecentOrder) {
@@ -947,45 +987,51 @@ itemModalEl.addEventListener('show.bs.modal', (event) => {
         return;
     }
 
-    // Initialize tabs - restore existing instances or create new
-    const existingItems = getSelectedItems().filter(item => 
-        item.name === currentItemName && item.type === currentItemType
-    );
-    
-    if (existingItems.length > 0 && !isLoadingFromSavedOrRecent) {
-        // Restore existing instances as tabs
-        tabInstances = [];
-        existingItems.forEach((item) => {
-            const quantity = item.quantity || 1;
-            for (let i = 0; i < quantity; i++) {
-                tabInstances.push({
-                    id: `tab-${++tabIdCounter}`,
-                    modifiers: Array.isArray(item.modifiers) ? [...item.modifiers] : [],
-                    specialRequests: item.specialRequests || ''
-                });
-            }
-        });
+    // Initialize tabs - restore existing instances ONLY for normal menu items (not saved/recent)
+    if (!isLoadingFromSavedOrRecent) {
+        const existingItems = getSelectedItems().filter(item => 
+            item.name === currentItemName && item.type === currentItemType && !item.fromSavedOrder
+        );
         
-        activeTabId = tabInstances[0].id;
-        renderTabs();
-        
-        setTimeout(() => {
-            if (tabInstances.length > 0 && activeTabId) {
-                const firstTab = tabInstances.find(t => t.id === activeTabId);
-                if (firstTab) {
-                    activeTabId = firstTab.id;
-                    if (instanceTabsContainer) {
-                        instanceTabsContainer.querySelectorAll('.instance-tab').forEach(tab => {
-                            tab.classList.toggle('active', tab.dataset.tabId === activeTabId);
-                        });
-                    }
-                    loadTabState(firstTab);
+        if (existingItems.length > 0) {
+            // Restore existing instances as tabs (only manual selections)
+            tabInstances = [];
+            existingItems.forEach((item) => {
+                const quantity = item.quantity || 1;
+                for (let i = 0; i < quantity; i++) {
+                    tabInstances.push({
+                        id: `tab-${++tabIdCounter}`,
+                        modifiers: Array.isArray(item.modifiers) ? [...item.modifiers] : [],
+                        specialRequests: item.specialRequests || ''
+                    });
                 }
-            }
-            adjustTabWidths();
-        }, 50);
+            });
+            
+            activeTabId = tabInstances[0].id;
+            renderTabs();
+            
+            setTimeout(() => {
+                if (tabInstances.length > 0 && activeTabId) {
+                    const firstTab = tabInstances.find(t => t.id === activeTabId);
+                    if (firstTab) {
+                        activeTabId = firstTab.id;
+                        if (instanceTabsContainer) {
+                            instanceTabsContainer.querySelectorAll('.instance-tab').forEach(tab => {
+                                tab.classList.toggle('active', tab.dataset.tabId === activeTabId);
+                            });
+                        }
+                        loadTabState(firstTab);
+                    }
+                }
+                adjustTabWidths();
+            }, 50);
+        } else {
+            // For unselected items, start fresh with cleared checkboxes
+            initializeTabs();
+            setTimeout(() => adjustTabWidths(), 100);
+        }
     } else {
-        // For unselected items, start fresh with cleared checkboxes
+        // For saved/recent orders, start fresh - data will be loaded by pending handlers
         initializeTabs();
         setTimeout(() => adjustTabWidths(), 100);
     }
@@ -1058,6 +1104,37 @@ const saveOrderBtn = document.getElementById('saveOrderBtn');
 if (saveOrderBtn) {
     saveOrderBtn.addEventListener('click', () => {
         saveCurrentOrder();
+    });
+}
+
+// --- Delete Order Button ---
+const deleteOrderBtn = document.getElementById('deleteOrderBtn');
+if (deleteOrderBtn) {
+    deleteOrderBtn.addEventListener('click', () => {
+        if (!currentEditingSavedOrderId) return;
+        
+        const savedOrders = getSavedOrders();
+        const order = savedOrders.find(o => o.id === currentEditingSavedOrderId);
+        const orderName = order ? order.name : 'this order';
+        
+        if (confirm(`Are you sure you want to delete "${orderName}"?`)) {
+            // Remove from saved orders
+            deleteSavedOrder(currentEditingSavedOrderId);
+            
+            // Remove from applied saved orders if it's currently applied
+            const appliedSavedOrders = getAppliedSavedOrders();
+            const isApplied = appliedSavedOrders.some(applied => applied.id === currentEditingSavedOrderId);
+            
+            if (isApplied) {
+                removeAppliedSavedOrder(currentEditingSavedOrderId);
+            }
+            
+            // Close the modal
+            const modalInstance = bootstrap.Modal.getInstance(itemModalEl);
+            if (modalInstance) modalInstance.hide();
+            
+            showNotification(`"${orderName}" has been deleted.`, 'success');
+        }
     });
 }
 
@@ -1566,6 +1643,14 @@ function populateRecentOrdersCarousel() {
     const carouselInner = carousel.querySelector('.carousel-inner');
     if (!carouselInner) return;
     
+    // Save current carousel position before rebuilding
+    const currentActiveItem = carouselInner.querySelector('.carousel-item.active');
+    let currentIndex = 0;
+    if (currentActiveItem) {
+        const allItems = Array.from(carouselInner.querySelectorAll('.carousel-item'));
+        currentIndex = allItems.indexOf(currentActiveItem);
+    }
+    
     const recentOrders = getRecentOrders();
     
     if (recentOrders.length === 0) {
@@ -1622,6 +1707,26 @@ function populateRecentOrdersCarousel() {
     
     carouselInner.innerHTML = carouselItems.join('');
     
+    // Restore carousel position after rebuilding
+    // Ensure the index is within bounds
+    const newItems = carouselInner.querySelectorAll('.carousel-item');
+    if (newItems.length > 0) {
+        const targetIndex = Math.min(currentIndex, newItems.length - 1);
+        
+        // Remove active class from all items
+        newItems.forEach(item => item.classList.remove('active'));
+        
+        // Set the target item as active
+        newItems[targetIndex].classList.add('active');
+        
+        // Update Bootstrap carousel instance to reflect the correct position
+        const carouselInstance = bootstrap.Carousel.getInstance(carousel);
+        if (carouselInstance) {
+            // Use Bootstrap's internal method to update position without animation
+            carouselInstance._activeElement = newItems[targetIndex];
+        }
+    }
+    
     // Add click handlers for recent order items
     carouselInner.querySelectorAll('.recent-order-item').forEach(img => {
         img.addEventListener('click', function(e) {
@@ -1641,6 +1746,14 @@ function populateSavedOrdersCarousel() {
     
     const carouselInner = carousel.querySelector('.carousel-inner');
     if (!carouselInner) return;
+    
+    // Save current carousel position before rebuilding
+    const currentActiveItem = carouselInner.querySelector('.carousel-item.active');
+    let currentIndex = 0;
+    if (currentActiveItem) {
+        const allItems = Array.from(carouselInner.querySelectorAll('.carousel-item'));
+        currentIndex = allItems.indexOf(currentActiveItem);
+    }
     
     const savedOrders = getSavedOrders();
     const appliedSavedOrders = getAppliedSavedOrders();
@@ -1716,6 +1829,26 @@ function populateSavedOrdersCarousel() {
     });
     
     carouselInner.innerHTML = carouselItems.join('');
+    
+    // Restore carousel position after rebuilding
+    // Ensure the index is within bounds
+    const newItems = carouselInner.querySelectorAll('.carousel-item');
+    if (newItems.length > 0) {
+        const targetIndex = Math.min(currentIndex, newItems.length - 1);
+        
+        // Remove active class from all items
+        newItems.forEach(item => item.classList.remove('active'));
+        
+        // Set the target item as active
+        newItems[targetIndex].classList.add('active');
+        
+        // Update Bootstrap carousel instance to reflect the correct position
+        const carouselInstance = bootstrap.Carousel.getInstance(carousel);
+        if (carouselInstance) {
+            // Use Bootstrap's internal method to update position without animation
+            carouselInstance._activeElement = newItems[targetIndex];
+        }
+    }
     
     // Add click handlers for saved order items (apply directly)
     carouselInner.querySelectorAll('.saved-order-item').forEach(img => {

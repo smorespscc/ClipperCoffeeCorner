@@ -29,6 +29,10 @@
                 padding: 2rem 1.5rem;
                 max-width: 95%;
             }
+            
+            .contributors-container {
+                padding: 1rem;
+            }
         }
         
         .contributors-title {
@@ -63,6 +67,11 @@
             .contributor-item {
                 font-size: 0.95rem;
                 padding: 0.6rem 0.25rem;
+            }
+            
+            .contributor-details {
+                font-size: 0.85rem;
+                padding: 0.6rem;
             }
         }
         
@@ -126,11 +135,26 @@
             font-weight: 500;
             margin-top: 2rem;
             display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
         }
         
         .back-link:hover {
             color: #D2691E;
             text-decoration: underline;
+            background-color: rgba(139, 69, 19, 0.05);
+        }
+        
+        @@media (max-width: 576px) {
+            .back-link {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.95rem;
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
         }
     </style>
 }

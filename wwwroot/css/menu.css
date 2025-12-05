@@ -386,6 +386,34 @@
         background-color: #b9d38c;
     }
 
+/* Viewing Mode Footer */
+#viewingModeFooter {
+    background: linear-gradient(135deg, #f5f3f0 0%, #e8d5c4 100%);
+    padding: 1rem;
+    border-top: 2px solid rgba(59, 47, 47, 0.1);
+}
+
+#viewingModeFooter .btn {
+    background: linear-gradient(135deg, var(--coffee-dark) 0%, #4a3933 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.875rem 2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(59, 47, 47, 0.2);
+}
+
+#viewingModeFooter .btn:hover {
+    background: linear-gradient(135deg, #4a3933 0%, var(--coffee-dark) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 47, 47, 0.3);
+    color: white;
+}
+
 /* Modal Footer Button Styling */
 .modal-footer .btn-order {
     background-color: #b5dba4;
@@ -1038,41 +1066,76 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 8px;
-    height: 20px;
-    background: white;
-    border-radius: 4px;
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
     transform: translate(-50%, -50%);
-    animation: soundWave 0.8s ease-in-out infinite;
+    animation: soundWaveExpand 1.5s ease-out infinite;
+    pointer-events: none;
 }
 
 .btn-mic.listening::after {
-    animation: micRipple 1.5s ease-out infinite, soundWaveRipple 0.8s ease-in-out infinite;
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: soundWaveExpand 1.5s ease-out infinite 0.5s;
+    pointer-events: none;
 }
 
-@keyframes soundWave {
-    0%, 100% {
-        height: 20px;
-        opacity: 0.8;
-    }
-    50% {
-        height: 35px;
+@keyframes soundWaveExpand {
+    0% {
+        width: 40px;
+        height: 40px;
         opacity: 1;
     }
-}
-
-@keyframes soundWaveRipple {
-    0%, 100% {
-        transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.2);
+    100% {
+        width: 100px;
+        height: 100px;
+        opacity: 0;
     }
 }
 
+/* Tablet optimization */
+@media (max-width: 768px) and (min-width: 577px) {
+    .menu-header h2 {
+        font-size: 1.75rem;
+    }
+    
+    .serving-dropdown-btn {
+        min-width: 260px;
+    }
+    
+    .section-title {
+        font-size: 0.95rem;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 46px;
+        height: 46px;
+    }
+    
+    .selected-indicator {
+        width: 46px;
+        height: 46px;
+    }
+}
+
+/* Mobile optimization */
 @media (max-width: 576px) {
     .menu-header h2 {
         font-size: 1.5rem;
+    }
+    
+    .menu-header {
+        padding: 1rem 0.75rem;
     }
     
     .selection-legend {
@@ -1118,6 +1181,19 @@
         display: none; /* Hide helper text on mobile */
     }
     
+    .section-title {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .section {
+        padding: 0.4rem 0.4rem 0.8rem;
+    }
+    
+    .menu-body {
+        padding: 0.75rem !important;
+    }
+    
     .empty-carousel-message {
         min-height: 40vh;
         padding: 1.5rem;
@@ -1155,6 +1231,60 @@
     
     .saved-order-delete-btn i {
         font-size: 1rem;
+    }
+    
+    /* Improve tap targets for mobile */
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .selected-indicator {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .selected-indicator i {
+        font-size: 20px;
+    }
+    
+    /* Microphone button mobile optimization */
+    .btn-mic {
+        padding: 0.85rem;
+        min-width: 48px;
+        min-height: 48px;
+    }
+    
+    .btn-mic i {
+        font-size: 1.2rem;
+    }
+    
+    /* Modal improvements for mobile */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-content {
+        padding: 1.5rem !important;
+    }
+    
+    .instance-tab {
+        min-width: 70px;
+        max-width: 150px;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    /* Footer buttons mobile spacing */
+    .menu-footer {
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    
+    .menu-footer .btn {
+        font-size: 0.95rem;
+        padding: 0.75rem;
     }
 }
 

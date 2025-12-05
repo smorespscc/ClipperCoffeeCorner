@@ -21,9 +21,10 @@
     @RenderBody()
 
     <!-- Contributions link -->
-    <div class="position-fixed bottom-0 end-0 p-3">
-        <a href="@Url.Action("Contributions", "Home")" class="text-muted small text-decoration-none" style="font-size: 0.75rem;">
-            Contributors
+    <div class="contributors-link-wrapper">
+        <a href="@Url.Action("Contributions", "Home")" class="contributors-link">
+            <i class="bi bi-people-fill"></i>
+            <span>Contributors</span>
         </a>
     </div>
 
